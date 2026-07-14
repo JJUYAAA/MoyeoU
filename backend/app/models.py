@@ -130,10 +130,10 @@ class Meeting(Base):
         onupdate=func.now(),
     )
 
-    location = relationship(
-        "Location",
-        back_populates="meetings",
-    )
+    # location = relationship(
+    #     "Location",
+    #     back_populates="meetings",
+    # )
 
     participants = relationship(
         "Participant",

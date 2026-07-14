@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.config import settings
 
+from app.routers.meetings import router as meetings_router
+
 # 서버 시작 시 SQLite 테이블 자동 생성
 Base.metadata.create_all(bind=engine)
 
@@ -16,6 +18,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(meetings_router)
 
 # TODO: 추후 개발 완료 시 각 라우터를 이곳에 포함시킵니다.
 # from app.routers import meetings, locations, chat
