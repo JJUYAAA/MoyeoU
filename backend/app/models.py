@@ -1,5 +1,19 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, ForeignKey
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    Time,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+
 from app.database import Base
 
 # 1. 공공데이터 장소 테이블
@@ -15,31 +29,155 @@ class Location(Base):
     image_url = Column(String, nullable=True)
     source = Column(String, nullable=True)
 
-# 2. 번개 모임 테이블
+# 번개모임 테이블
 class Meeting(Base):
     __tablename__ = "meetings"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    title = Column(String, index=True, nullable=False)
-    category = Column(String, nullable=False)
-    meeting_date = Column(String, nullable=False) # 예: "2026-07-15" 또는 "오늘"
-    meeting_time = Column(String, nullable=False) # 예: "19:00"
-    location_name = Column(String, nullable=False) # 장소명
-    max_participants = Column(Integer, default=4)
-    current_participants = Column(Integer, default=1)
-    content = Column(Text, nullable=True)
-    password = Column(String, nullable=False) # 평문 암호화 비교 (요구사항)
-    status = Column(String, default="OPEN") # OPEN, CLOSED, END
-    location_id = Column(String, ForeignKey("locations.id"), nullable=True) # 공공데이터 연결
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    # 잘못된 인원 정보가 들어가는 것을 방지
+    __table_args__ = (
+        CheckConstraint(
+            "max_participants >= 2",
+            name="check_max_participants_minimum",
+        ),
+        CheckConstraint(
+            "current_participants >= 1",
+            name="check_current_participants_minimum",
+        ),
+        CheckConstraint(
+            "current_participants <= max_participants",
+            name="check_participant_capacity",
+        ),
+    )
 
-# 3. 참여자 테이블
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+        autoincrement=True,
+    )
+    title = Column(
+        String(100),
+        nullable=False,
+        index=True,
+    )
+    category = Column(
+        String(30),
+        nullable=False,
+        index=True,
+    )
+    meeting_date = Column(
+        Date,
+        nullable=False,
+        index=True,
+    )
+    meeting_time = Column(
+        Time,
+        nullable=False,
+    )
+    location_name = Column(
+        String(150),
+        nullable=False,
+        index=True,
+    )
+    max_participants = Column(
+        Integer,
+        nullable=False,
+        default=4,
+    )
+    current_participants = Column(
+        Integer,
+        nullable=False,
+        default=1,
+    )
+    content = Column(
+        Text,
+        nullable=False,
+    )
+
+    # 프로젝트 명세에 따른 수정·삭제 확인용 비밀번호
+    # API 응답에는 절대 포함하지 않음
+    password = Column(
+        String(100),
+        nullable=False,
+    )
+
+    # OPEN: 모집 중
+    # CLOSED: 모집 완료
+    # END: 종료
+    status = Column(
+        String(20),
+        nullable=False,
+        default="OPEN",
+        index=True,
+    )
+
+    # 개발자 B가 제공하는 공공데이터 장소 ID
+    location_id = Column(
+        String(100),
+        ForeignKey("locations.id"),
+        nullable=True,
+        index=True,
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        onupdate=func.now(),
+    )
+
+    location = relationship(
+        "Location",
+        back_populates="meetings",
+    )
+
+    participants = relationship(
+        "Participant",
+        back_populates="meeting",
+        cascade="all, delete-orphan",
+    )
+
+# 모임 참여자 테이블
 class Participant(Base):
     __tablename__ = "participants"
 
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    meeting_id = Column(Integer, ForeignKey("meetings.id"), nullable=False)
-    nickname = Column(String, nullable=False)
-    password = Column(String, nullable=False) # 참여 취소용 비밀번호
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+        autoincrement=True,
+    )
+    meeting_id = Column(
+        Integer,
+        ForeignKey(
+            "meetings.id",
+            ondelete="CASCADE",
+        ),
+        nullable=False,
+        index=True,
+    )
+    nickname = Column(
+        String(30),
+        nullable=False,
+    )
+
+    # 참여 취소 확인용 비밀번호
+    # API 응답에는 절대 포함하지 않음
+    password = Column(
+        String(100),
+        nullable=False,
+    )
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    meeting = relationship(
+        "Meeting",
+        back_populates="participants",
+    )
