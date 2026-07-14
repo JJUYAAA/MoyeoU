@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.config import settings
+from app.routers import chat, locations
 
 from app.routers.meetings import router as meetings_router
 
@@ -24,8 +25,8 @@ app.include_router(meetings_router)
 # TODO: 추후 개발 완료 시 각 라우터를 이곳에 포함시킵니다.
 # from app.routers import meetings, locations, chat
 # app.include_router(meetings.router)
-# app.include_router(locations.router)
-# app.include_router(chat.router)
+app.include_router(locations.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def health_check():
