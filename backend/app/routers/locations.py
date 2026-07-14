@@ -96,7 +96,7 @@ def get_locations(
         query = query.filter(models.Location.content_type == content_type)
     if keyword:
         query = query.filter(models.Location.title.contains(keyword))
-    return query.limit(50).all()
+    return query.limit(1000).all()
 
 
 # --- 장소 상세 조회 API ---
