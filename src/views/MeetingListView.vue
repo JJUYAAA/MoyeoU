@@ -12,7 +12,7 @@ const keyword = ref(route.query.q ? String(route.query.q) : '')
 const selectedCategory = ref('전체')
 const onlyOpen = ref(false)
 
-const categories = ['전체', '모각코·공부', '식사·카페', '운동', '문화·행사', '나들이']
+const categories = ['전체', '모각코·스터디', 'CS·알고리즘', '점심·저녁', '프로젝트·팀원', '운동·산책', '취준·정보공유']
 
 onMounted(async () => {
   meetings.value = await getMeetings()
@@ -41,7 +41,7 @@ const filteredMeetings = computed(() => {
       <input
         v-model="keyword"
         type="text"
-        placeholder="키워드로 검색 (예: 모각코, 성심당)"
+        placeholder="키워드로 검색 (예: 모각코, 알고리즘, 프로젝트)"
         class="field-input"
       />
       <CategoryFilter :categories="categories" v-model="selectedCategory" />

@@ -6,7 +6,7 @@ import { createMeeting } from '@/services/api'
 const route = useRoute()
 const router = useRouter()
 
-const categories = ['모각코·공부', '식사·카페', '운동', '문화·행사', '나들이']
+const categories = ['모각코·스터디', 'CS·알고리즘', '점심·저녁', '프로젝트·팀원', '운동·산책', '취준·정보공유']
 
 const form = ref({
   title: '',
@@ -70,7 +70,7 @@ async function submit() {
 
       <div>
         <label class="field-label">장소</label>
-        <input v-model="form.location" type="text" required class="field-input" placeholder="예: SSAFY 대전 캠퍼스 1층" />
+        <input v-model="form.location" type="text" required class="field-input" placeholder="예: SSAFY 대전 캠퍼스 스터디룸 A" />
       </div>
 
       <div>

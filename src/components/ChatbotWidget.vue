@@ -6,11 +6,11 @@ import MeetingCard from '@/components/MeetingCard.vue'
 const open = ref(false)
 const input = ref('')
 const messages = ref([
-  { role: 'bot', text: '안녕하세요! 찾고 있는 모임을 자연스럽게 물어보세요.', results: [] },
+  { role: 'bot', text: '안녕하세요! SSAFY 동료들과 함께할 모임을 자연스럽게 물어보세요.', results: [] },
 ])
 const listRef = ref(null)
 
-const suggestions = ['오늘 모각코 있어?', '이번 주말 운동 모임 찾아줘', '같이 저녁 먹을 사람 있어?']
+const suggestions = ['오늘 알고리즘 모각코 있어?', 'CS 면접 스터디 찾아줘', '점심 같이 먹을 사람 있어?']
 
 async function send(text) {
   const query = (text ?? input.value).trim()

@@ -4,14 +4,17 @@ import { RouterLink } from 'vue-router'
 const navLinks = [
   { label: '홈', to: '/' },
   { label: '모임 찾기', to: '/meetings' },
-  { label: '대전 장소·행사', to: '/locations' },
+  { label: '캠퍼스 주변', to: '/locations' },
 ]
 </script>
 
 <template>
   <header class="sticky top-0 z-40 border-b border-line bg-white/90 backdrop-blur">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-      <RouterLink to="/" class="text-2xl font-bold text-brand">모여유</RouterLink>
+      <RouterLink to="/" class="flex items-center gap-2">
+        <span class="text-2xl font-bold text-brand">모여유</span>
+        <span class="rounded-md bg-brand px-2 py-0.5 text-xs font-semibold text-white">SSAFY 대전</span>
+      </RouterLink>
 
       <nav class="flex items-center gap-1">
         <RouterLink
