@@ -1,0 +1,98 @@
+// 간단한 목업 데이터 - 나중에 실제 API로 교체하세요.
+
+export const meetings = [
+  {
+    id: 1,
+    title: '오늘 저녁 알고리즘 모각코',
+    category: '모각코·공부',
+    date: '오늘',
+    time: '19:00',
+    location: 'SSAFY 대전 캠퍼스 1층',
+    current: 2,
+    max: 4,
+    status: 'OPEN',
+    description:
+      '오늘 교육 끝나고 알고리즘 문제 같이 풀어요. 백준 골드 문제 위주로 진행할 예정입니다. 노트북 챙겨오세요!',
+  },
+  {
+    id: 2,
+    title: '교육 끝나고 성심당 같이 갈 사람',
+    category: '식사·카페',
+    date: '오늘',
+    time: '18:30',
+    location: '성심당 본점',
+    current: 3,
+    max: 5,
+    status: 'OPEN',
+    description: '성심당에서 튀김소보로랑 빵 사고 근처에서 저녁도 먹어요. 편하게 오세요!',
+  },
+  {
+    id: 3,
+    title: '갑천 러닝 3km 초보 환영',
+    category: '운동',
+    date: '내일',
+    time: '19:30',
+    location: '갑천 산책로',
+    current: 4,
+    max: 6,
+    status: 'OPEN',
+    description: '천천히 3km 정도 달려요. 러닝 초보도 부담 없이 참여 가능합니다.',
+  },
+  {
+    id: 4,
+    title: '대전 전시회 같이 보러 가요',
+    category: '문화·행사',
+    date: '토요일',
+    time: '14:00',
+    location: '대전시립미술관',
+    current: 2,
+    max: 4,
+    status: 'OPEN',
+    description: '주말에 대전시립미술관 전시 같이 관람해요. 관람 후 카페에서 이야기 나눠요.',
+  },
+  {
+    id: 5,
+    title: '주말 한밭수목원 산책',
+    category: '나들이',
+    date: '일요일',
+    time: '10:00',
+    location: '한밭수목원',
+    current: 1,
+    max: 5,
+    status: 'OPEN',
+    description: '아침에 한밭수목원 한 바퀴 돌면서 산책해요. 사진 찍는 것 좋아하면 더 좋아요!',
+  },
+]
+
+export const locations = [
+  {
+    id: 1,
+    name: '한밭수목원',
+    type: '나들이',
+    address: '대전광역시 서구 둔산대로 169',
+  },
+  {
+    id: 2,
+    name: '성심당 본점',
+    type: '맛집',
+    address: '대전광역시 중구 대종로480번길 15',
+  },
+  {
+    id: 3,
+    name: '갑천 산책로',
+    type: '운동·체험',
+    address: '대전광역시 유성구 갑천 일대',
+  },
+  {
+    id: 4,
+    name: '대전시립미술관',
+    type: '문화·행사',
+    address: '대전광역시 서구 둔산대로 155',
+  },
+  {
+    id: 5,
+    name: '엑스포시민광장',
+    type: '나들이',
+    address: '대전광역시 유성구 대덕대로 480',
+  },
+]
