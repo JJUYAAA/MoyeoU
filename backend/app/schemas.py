@@ -114,6 +114,44 @@ class MeetingResponse(MeetingBase):
     created_at: datetime
     updated_at: datetime
 
+# 모임 비밀번호 확인 요청
+class PasswordRequest(BaseModel):
+    password: str = Field(
+        min_length=4,
+        max_length=100,
+    )
+
+# 모임 비밀번호 확인 응답
+class MessageResponse(BaseModel):
+    message: str    
+
+# 모임 수정 요청
+class MeetingUpdate(MeetingBase):
+    password: str = Field(
+        min_length=4,
+        max_length=100,
+    )
+
+    @field_validator("meeting_date")
+    @classmethod
+    def meeting_date_cannot_be_past(
+        cls,
+        value: date,
+    ) -> date:
+        if value < date.today():
+            raise ValueError(
+                "과거 날짜로 모임을 수정할 수 없습니다."
+            )
+
+        return value
+    
+# 모집 목록 응답
+class MeetingListResponse(BaseModel):
+    items: list[MeetingResponse]
+    total: int
+    page: int
+    size: int
+
 # 참여 신청 요청
 class ParticipantJoin(BaseModel):
     nickname: str = Field(
