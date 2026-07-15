@@ -92,7 +92,15 @@ async function join() {
     });
 
     if (meeting.value) {
+      // 참여 인원 1 증가
       meeting.value.current_participants += 1;
+
+      // 인원이 꽉 찼다면 실시간으로 모집 완료 상태로 전환
+      if (
+        meeting.value.current_participants >= meeting.value.max_participants
+      ) {
+        meeting.value.status = "CLOSED";
+      }
     }
 
     joined.value = true;
@@ -101,10 +109,13 @@ async function join() {
     const serverErrorMsg = error.response?.data?.detail;
 
     if (Array.isArray(serverErrorMsg)) {
-      alert(`입력 형식 오류: ${serverErrorMsg[0]?.msg || "형식을 확인해 주세요."}`);
+      alert(
+        `입력 형식 오류: ${serverErrorMsg[0]?.msg || "형식을 확인해 주세요."}`,
+      );
     } else {
       alert(
-        serverErrorMsg || "참여 신청에 실패했습니다. 정원이 초과되었거나 중복 신청일 수 있습니다.",
+        serverErrorMsg ||
+          "참여 신청에 실패했습니다. 정원이 초과되었거나 중복 신청일 수 있습니다.",
       );
     }
   } finally {
@@ -308,8 +319,15 @@ const formatDate = (dateStr) => {
     </div>
 
     <p v-if="loading" class="py-16 text-center text-ink/50">불러오는 중...</p>
-    <p v-else-if="errorMsg" class="py-16 text-center text-red-500 font-semibold">{{ errorMsg }}</p>
-    <p v-else-if="!meeting" class="py-16 text-center text-ink/50">모임을 찾을 수 없어요.</p>
+    <p
+      v-else-if="errorMsg"
+      class="py-16 text-center text-red-500 font-semibold"
+    >
+      {{ errorMsg }}
+    </p>
+    <p v-else-if="!meeting" class="py-16 text-center text-ink/50">
+      모임을 찾을 수 없어요.
+    </p>
 
     <div v-else class="mt-4 space-y-8">
       <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
@@ -325,7 +343,8 @@ const formatDate = (dateStr) => {
             :class="{
               'bg-brand text-white': meeting.status === 'OPEN',
               'bg-gray-200 text-gray-700': meeting.status === 'CLOSED',
-              'bg-line text-ink/60': meeting.status !== 'OPEN' && meeting.status !== 'CLOSED',
+              'bg-line text-ink/60':
+                meeting.status !== 'OPEN' && meeting.status !== 'CLOSED',
             }"
           >
             <span v-if="meeting.status === 'OPEN'">모집 중</span>
@@ -341,7 +360,9 @@ const formatDate = (dateStr) => {
             <dt class="text-ink/50">일시</dt>
             <dd class="font-medium text-ink">
               {{ meeting.meeting_date }}
-              {{ meeting.meeting_time ? meeting.meeting_time.substring(0, 5) : "" }}
+              {{
+                meeting.meeting_time ? meeting.meeting_time.substring(0, 5) : ""
+              }}
             </dd>
           </div>
           <div>
@@ -351,17 +372,22 @@ const formatDate = (dateStr) => {
           <div>
             <dt class="text-ink/50">참여 인원</dt>
             <dd class="font-medium text-ink">
-              {{ meeting.current_participants }} / {{ meeting.max_participants }}명
+              {{ meeting.current_participants }} /
+              {{ meeting.max_participants }}명
             </dd>
           </div>
         </dl>
 
         <div class="mb-6">
           <h2 class="mb-2 font-bold text-ink text-base">상세 내용</h2>
-          <p class="leading-relaxed text-ink/80 whitespace-pre-line">{{ meeting.content }}</p>
+          <p class="leading-relaxed text-ink/80 whitespace-pre-line">
+            {{ meeting.content }}
+          </p>
         </div>
 
-        <p class="mb-6 rounded-lg bg-brand-light px-4 py-3 text-sm text-brand-hover">
+        <p
+          class="mb-6 rounded-lg bg-brand-light px-4 py-3 text-sm text-brand-hover"
+        >
           개인정보 공유를 피하고, 공개된 장소에서 만나는 것을 권장합니다.
         </p>
 
@@ -373,7 +399,9 @@ const formatDate = (dateStr) => {
             @click="showJoinModal = true"
           >
             <span v-if="meeting.status === 'OPEN'">참여하기</span>
-            <span v-else-if="meeting.status === 'CLOSED'">모집 완료되었습니다</span>
+            <span v-else-if="meeting.status === 'CLOSED'"
+              >모집 완료되었습니다</span
+            >
             <span v-else>모집이 마감되었습니다</span>
           </button>
 
@@ -388,22 +416,32 @@ const formatDate = (dateStr) => {
       </div>
 
       <div class="space-y-6">
-        <h3 class="text-lg font-bold text-ink">댓글 ({{ meeting.comments?.length || 0 }})</h3>
+        <h3 class="text-lg font-bold text-ink">
+          댓글 ({{ meeting.comments?.length || 0 }})
+        </h3>
 
         <div v-if="rootComments.length > 0" class="space-y-4">
           <div
             v-for="comment in rootComments"
             :key="comment.id"
-            class="rounded-xl border border-line bg-white p-5 shadow-sm space-y-2"
+            class="rounded-xl border border-line bg-white p-5 shadow-sm space-y-3"
           >
             <div class="flex justify-between items-center text-xs">
               <span class="font-bold text-ink">{{ comment.nickname }}</span>
-              <span class="text-ink/50">{{ formatDate(comment.created_at) }}</span>
+              <span class="text-ink/50">{{
+                formatDate(comment.created_at)
+              }}</span>
             </div>
-            <p class="text-sm text-ink/90 whitespace-pre-line">{{ comment.content }}</p>
 
-            <div class="flex gap-3 text-xs text-brand">
-              <button @click="toggleReplyForm(comment.id)" class="hover:underline">
+            <p class="text-sm text-ink/90 whitespace-pre-line">
+              {{ comment.content }}
+            </p>
+
+            <div class="flex gap-3 text-xs text-brand font-medium">
+              <button
+                @click="toggleReplyForm(comment.id)"
+                class="hover:underline"
+              >
                 답글 달기
               </button>
               <button
@@ -455,33 +493,45 @@ const formatDate = (dateStr) => {
 
             <div
               v-if="getReplies(comment.id).length > 0"
-              class="mt-3 pl-5 border-l-2 border-brand-light space-y-3"
+              class="mt-4 pl-4 border-l-2 border-brand/20 space-y-3"
             >
               <div
                 v-for="reply in getReplies(comment.id)"
                 :key="reply.id"
-                class="rounded-lg bg-gray-50 p-3 border border-line space-y-1"
+                class="rounded-lg bg-gray-50/80 p-3.5 border border-line/60 space-y-1.5"
               >
                 <div class="flex justify-between items-center text-xs">
-                  <span class="font-bold text-ink">↪ {{ reply.nickname }}</span>
-                  <span class="text-ink/50">{{ formatDate(reply.created_at) }}</span>
+                  <span class="font-bold text-ink/80 flex items-center gap-1">
+                    <span class="text-brand">↪</span> {{ reply.nickname }}
+                  </span>
+                  <span class="text-ink/40">{{
+                    formatDate(reply.created_at)
+                  }}</span>
                 </div>
-                <p class="text-xs text-ink/90 whitespace-pre-line">{{ reply.content }}</p>
+
+                <p class="text-xs text-ink/80 whitespace-pre-line pl-4">
+                  {{ reply.content }}
+                </p>
+
                 <div class="text-right">
                   <button
                     @click="triggerDeleteComment(reply.id)"
-                    class="text-xs text-red-500 hover:underline"
+                    class="text-[10px] text-red-400 hover:text-red-500 hover:underline"
                   >
-                    삭제
+                    답글 삭제
                   </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <p v-else class="text-center py-6 text-ink/40 text-xs">등록된 댓글이 아직 없습니다.</p>
+        <p v-else class="text-center py-6 text-ink/40 text-xs">
+          등록된 댓글이 아직 없습니다.
+        </p>
 
-        <div class="rounded-xl border border-line bg-white p-5 shadow-sm space-y-3">
+        <div
+          class="rounded-xl border border-line bg-white p-5 shadow-sm space-y-3"
+        >
           <h4 class="font-bold text-ink text-xs">댓글 작성하기</h4>
           <div class="flex gap-3">
             <input
@@ -517,7 +567,9 @@ const formatDate = (dateStr) => {
     <BaseModal :open="showJoinModal" title="모임 참여하기" @close="closeModal">
       <div v-if="!joined" class="space-y-4">
         <div>
-          <label class="field-label text-sm font-semibold block mb-1">닉네임</label>
+          <label class="field-label text-sm font-semibold block mb-1"
+            >닉네임</label
+          >
           <input
             v-model="joinForm.nickname"
             type="text"
@@ -526,7 +578,9 @@ const formatDate = (dateStr) => {
           />
         </div>
         <div>
-          <label class="field-label text-sm font-semibold block mb-1">참여 비밀번호</label>
+          <label class="field-label text-sm font-semibold block mb-1"
+            >참여 비밀번호</label
+          >
           <input
             v-model="joinForm.password"
             type="password"
@@ -549,18 +603,29 @@ const formatDate = (dateStr) => {
       </div>
       <div v-else class="py-4 text-center">
         <p class="mb-4 text-ink font-medium">
-          참여 신청이 성공적으로 완료되었어요! <br />약속 장소에서 안전하고 유익한 시간 보내세요.
+          참여 신청이 성공적으로 완료되었어요! <br />약속 장소에서 안전하고
+          유익한 시간 보내세요.
         </p>
-        <button type="button" class="btn-outline border px-4 py-2 rounded-lg" @click="closeModal">
+        <button
+          type="button"
+          class="btn-outline border px-4 py-2 rounded-lg"
+          @click="closeModal"
+        >
           닫기
         </button>
       </div>
     </BaseModal>
 
-    <BaseModal :open="showLeaveModal" title="모임 참여 취소" @close="closeModal">
+    <BaseModal
+      :open="showLeaveModal"
+      title="모임 참여 취소"
+      @close="closeModal"
+    >
       <div v-if="!left" class="space-y-4">
         <div>
-          <label class="field-label text-sm font-semibold block mb-1">참여시 작성했던 닉네임</label>
+          <label class="field-label text-sm font-semibold block mb-1"
+            >참여시 작성했던 닉네임</label
+          >
           <input
             v-model="leaveForm.nickname"
             type="text"
@@ -569,7 +634,9 @@ const formatDate = (dateStr) => {
           />
         </div>
         <div>
-          <label class="field-label text-sm font-semibold block mb-1">참여 비밀번호</label>
+          <label class="field-label text-sm font-semibold block mb-1"
+            >참여 비밀번호</label
+          >
           <input
             v-model="leaveForm.password"
             type="password"
@@ -592,9 +659,14 @@ const formatDate = (dateStr) => {
       </div>
       <div v-else class="py-4 text-center">
         <p class="mb-4 text-ink font-medium">
-          모임 참여 취소가 완료되었습니다. <br />다음에 더 즐거운 모임으로 만나요!
+          모임 참여 취소가 완료되었습니다. <br />다음에 더 즐거운 모임으로
+          만나요!
         </p>
-        <button type="button" class="btn-outline border px-4 py-2 rounded-lg" @click="closeModal">
+        <button
+          type="button"
+          class="btn-outline border px-4 py-2 rounded-lg"
+          @click="closeModal"
+        >
           닫기
         </button>
       </div>
