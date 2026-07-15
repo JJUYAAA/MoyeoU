@@ -3,6 +3,7 @@ from pydantic import (
     ConfigDict,
     Field,
     field_validator,
+    EmailStr,
 )
 from typing import Optional, List, Literal
 from datetime import date, datetime, time
@@ -171,3 +172,25 @@ class ParticipantResponse(BaseModel):
     meeting_id: int
     nickname: str
     created_at: datetime
+    
+# 모임 참여 신청
+class ParticipantJoin(BaseModel):
+    nickname: str = Field(..., min_length=1, max_length=20, description="참여자 닉네임")
+    email: EmailStr = Field(..., description="참여자 이메일 (중복 방지 및 식별용)")
+    password: str = Field(..., min_length=4, description="참여 취소 시 사용할 비밀번호")
+    
+# 모임 참여 취소 요청
+class ParticipantLeave(BaseModel):
+    email: EmailStr = Field(..., description="신청 시 입력한 이메일")
+    password: str = Field(..., description="신청 시 입력한 비밀번호")
+   
+# 참여자 응답 
+class ParticipantResponse(BaseModel):
+    id: int
+    meeting_id: int
+    nickname: str
+    email: EmailStr
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
