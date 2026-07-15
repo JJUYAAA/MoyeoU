@@ -48,17 +48,6 @@ const filteredPlaces = computed(() => {
     return mapped === selectedCategory.value;
   });
 });
-
-// 특정 장소 클릭 시 번개 모임 생성 페이지로 이동
-const handleCreateMeeting = (place) => {
-  router.push({
-    path: "/meetings/create",
-    query: {
-      loc_id: place.id,
-      loc_name: place.title,
-    },
-  });
-};
 </script>
 
 <template>
@@ -79,13 +68,6 @@ const handleCreateMeeting = (place) => {
         class="group relative flex flex-col justify-between"
       >
         <PlaceCard :place="p" />
-
-        <button
-          @click="handleCreateMeeting(p)"
-          class="mt-2 w-full py-2.5 px-4 bg-primary text-white rounded-lg font-semibold text-sm hover:bg-primary-dark transition-colors duration-200 shadow-sm"
-        >
-          ⚡ 여기서 모임 만들기
-        </button>
       </div>
     </div>
   </div>

@@ -1,38 +1,52 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { createMeeting } from '@/services/api'
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { createMeeting } from "@/services/api";
 
-const route = useRoute()
-const router = useRouter()
+const route = useRoute();
+const router = useRouter();
 
-const categories = ['모각코·스터디', 'CS·알고리즘', '점심·저녁', '프로젝트·팀원', '운동·산책', '취준·정보공유']
+const categories = [
+  "모각코·스터디",
+  "CS·알고리즘",
+  "점심·저녁",
+  "프로젝트·팀원",
+  "운동·산책",
+  "취준·정보공유",
+];
 
 const form = ref({
-  title: '',
+  title: "",
   category: categories[0],
-  date: '',
-  time: '',
-  location: '',
+  date: "",
+  time: "",
+  location: "",
   max: 4,
-  description: '',
-  password: '',
-})
+  description: "",
+  password: "",
+  location_id: null, // 💡 백엔드 DB 연동을 위해 공공데이터 고유 ID를 담아둘 공간 추가!
+});
 
-const submitted = ref(false)
+const submitted = ref(false);
 
 onMounted(() => {
-  // 장소 페이지에서 넘어온 경우 장소를 미리 채웁니다.
-  if (route.query.place) {
-    form.value.location = String(route.query.place)
+  // ⚡ [공공데이터 연동 핵심]
+  // PlaceCard.vue에서 보낸 'loc_name'과 'loc_id'를 정확하게 캐치해서 매핑합니다!
+  if (route.query.loc_name) {
+    form.value.location = String(route.query.loc_name);
   }
-})
+  if (route.query.loc_id) {
+    form.value.location_id = String(route.query.loc_id);
+  }
+});
 
 async function submit() {
-  await createMeeting({ ...form.value })
-  submitted.value = true
-  // 잠시 성공 메시지를 보여준 뒤 목록으로 이동합니다.
-  setTimeout(() => router.push('/meetings'), 1200)
+  // 💡 백엔드로 보낼 때 location_id 정보까지 묶어서 안전하게 API 전송!
+  await createMeeting({ ...form.value });
+  submitted.value = true;
+
+  // 성공 메시지를 보여준 뒤 모임 목록으로 이동
+  setTimeout(() => router.push("/meetings"), 1200);
 }
 </script>
 
@@ -47,7 +61,13 @@ async function submit() {
     <form class="space-y-5 rounded-xl border border-line bg-white p-6" @submit.prevent="submit">
       <div>
         <label class="field-label">제목</label>
-        <input v-model="form.title" type="text" required class="field-input" placeholder="예: 오늘 저녁 알고리즘 모각코" />
+        <input
+          v-model="form.title"
+          type="text"
+          required
+          class="field-input"
+          placeholder="예: 오늘 저녁 알고리즘 모각코"
+        />
       </div>
 
       <div>
@@ -60,7 +80,13 @@ async function submit() {
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label class="field-label">날짜</label>
-          <input v-model="form.date" type="text" required class="field-input" placeholder="예: 오늘, 토요일" />
+          <input
+            v-model="form.date"
+            type="text"
+            required
+            class="field-input"
+            placeholder="예: 오늘, 토요일"
+          />
         </div>
         <div>
           <label class="field-label">시간</label>
@@ -70,22 +96,49 @@ async function submit() {
 
       <div>
         <label class="field-label">장소</label>
-        <input v-model="form.location" type="text" required class="field-input" placeholder="예: SSAFY 대전 캠퍼스 스터디룸 A" />
+        <input
+          v-model="form.location"
+          type="text"
+          required
+          class="field-input"
+          placeholder="예: SSAFY 대전 캠퍼스 스터디룸 A"
+        />
+        <p v-if="form.location_id" class="mt-1.5 text-xs font-semibold text-brand-hover">
+          📍 추천 장소 정보가 자동으로 안전하게 기입되었습니다.
+        </p>
       </div>
 
       <div>
         <label class="field-label">최대 모집 인원</label>
-        <input v-model.number="form.max" type="number" min="2" max="20" required class="field-input" />
+        <input
+          v-model.number="form.max"
+          type="number"
+          min="2"
+          max="20"
+          required
+          class="field-input"
+        />
       </div>
 
       <div>
         <label class="field-label">상세 내용</label>
-        <textarea v-model="form.description" rows="4" class="field-input" placeholder="모임에 대해 자유롭게 소개해주세요."></textarea>
+        <textarea
+          v-model="form.description"
+          rows="4"
+          class="field-input"
+          placeholder="모임에 대해 자유롭게 소개해주세요."
+        ></textarea>
       </div>
 
       <div>
         <label class="field-label">수정·삭제용 비밀번호</label>
-        <input v-model="form.password" type="password" required class="field-input" placeholder="모임 관리를 위한 비밀번호" />
+        <input
+          v-model="form.password"
+          type="password"
+          required
+          class="field-input"
+          placeholder="모임 관리를 위한 비밀번호"
+        />
       </div>
 
       <button type="submit" class="btn-primary w-full">모임 등록하기</button>
