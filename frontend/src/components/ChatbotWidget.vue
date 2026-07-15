@@ -2,6 +2,7 @@
 import { ref, nextTick } from "vue";
 import { searchChat } from "@/services/api";
 import MeetingCard from "@/components/MeetingCard.vue";
+import PlaceCard from "@/components/PlaceCard.vue";
 
 const open = ref(false);
 const input = ref("");
@@ -10,6 +11,8 @@ const messages = ref([
     role: "bot",
     text: "안녕하세요! SSAFY 동료들과 함께할 모임을 자연스럽게 물어보세요.",
     results: [],
+    // 메시지 타입 기본값 세팅
+    target: "MEETING",
   },
 ]);
 const listRef = ref(null);
@@ -24,12 +27,21 @@ async function send(text) {
   const query = (text ?? input.value).trim();
   if (!query) return;
 
-  messages.value.push({ role: "user", text: query, results: [] });
+  // 프론트가 전송을 감지하는 순간에도 메시지 기본 target 형태 지정
+  messages.value.push({ role: "user", text: query, results: [], target: "MEETING" });
   input.value = "";
   await scrollToBottom();
 
-  const { reply, results } = await searchChat(query);
-  messages.value.push({ role: "bot", text: reply, results });
+  // 백엔드에서 전송받는 matched_data와 target 구조 분해 할당
+  const { reply, matched_data, target } = await searchChat(query);
+
+  // 백엔드에서 수신한 matched_data를 results에 바인딩하고 target 정보를 함께 보관
+  messages.value.push({
+    role: "bot",
+    text: reply,
+    results: matched_data,
+    target: target,
+  });
   await scrollToBottom();
 }
 
@@ -56,7 +68,7 @@ function onKeydown(e) {
       v-else
       class="text-center text-[12pt] font-black leading-tight tracking-tighter drop-shadow-[0_1.5px_1px_rgba(0,0,0,0.3)]"
     >
-      도와<br />줄까유
+      도와<br />줄까유?
     </span>
   </button>
 
@@ -82,7 +94,12 @@ function onKeydown(e) {
             {{ msg.text }}
           </div>
           <div v-if="msg.results && msg.results.length" class="mt-3 space-y-3">
-            <MeetingCard v-for="m in msg.results" :key="m.id" :meeting="m" />
+            <template v-if="msg.target === 'MEETING'">
+              <MeetingCard v-for="m in msg.results" :key="m.id" :meeting="m" />
+            </template>
+            <template v-else-if="msg.target === 'LOCATION'">
+              <PlaceCard v-for="p in msg.results" :key="p.id" :place="p" />
+            </template>
           </div>
         </div>
       </div>

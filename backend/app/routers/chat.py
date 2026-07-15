@@ -4,8 +4,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
-# [수정] 데이터 타입 유동적 반환을 위해 Any 추가
-from typing import Optional, List, Any 
+from typing import Optional, List, Union 
 from app.database import get_db
 from app import models, schemas
 from app.config import settings
@@ -39,7 +38,8 @@ class ChatResponse(BaseModel):
     reply: str
     #  답변 데이터가 모임(MEETING)인지 장소(LOCATION)인지 구분
     target: str 
-    matched_data: List[Any] 
+    # Pydantic이 LocationResponse와 MeetingResponse 규격을 정상적으로 파악하고 직렬화하도록 명시
+    matched_data: List[Union[schemas.MeetingResponse, schemas.LocationResponse]] 
 
 @router.post("", response_model=ChatResponse)
 def chat_and_search(payload: ChatRequest, db: Session = Depends(get_db)):
@@ -67,7 +67,8 @@ def chat_and_search(payload: ChatRequest, db: Session = Depends(get_db)):
                         f"'category', 'meeting_date'를 추출하는 대전 SSAFY '모여유' 비서야. "
                         f"오늘 날짜는 {today_str}일이야. "
                         f"사용자의 자연어 질문에서 '함께할 사람/번개 구함'이 핵심이면 'MEETING', 단순 '맛집/장소 추천' 요청이면 'LOCATION'으로 target을 분류해줘. "
-                        f"카테고리는 지정된 분류명으로 매핑해줘."
+                        f"특히 사용자가 맛집, 밥집, 음식점, 먹을 곳 등을 언급하면 category 값을 반드시 '음식점'으로 매핑하고, "
+                        f"관광, 놀거리, 구경 등을 언급하면 '관광지', 걷기, 조깅, 레저 활동을 언급하면 '레포츠', 전시, 예술, 스터디룸 등을 언급하면 '문화시설', 쇼핑, 옷, 신발을 언급하면 '쇼핑', 여행, 코스, 힐링 등을 언급하면 '여행코스', 축제, 페스티벌, 공연, 파티 등을 언급하면 '축제공연행사'로 최종 분류하여 출력해야 해."
                     )
                 },
                 {"role": "user", "content": payload.message}
@@ -119,6 +120,7 @@ def chat_and_search(payload: ChatRequest, db: Session = Depends(get_db)):
         # Location 테이블에서 해당 카테고리(content_type)에 맞는 장소들 조회 
         query = db.query(models.Location)
         
+        # GPT가 변환하여 내뱉은 실제 DB 카테고리 값('음식점', '관광지' 등)을 사용해 즉시 쿼리 필터링
         if category:
             query = query.filter(models.Location.content_type == category)
         
