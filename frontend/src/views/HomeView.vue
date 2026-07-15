@@ -1,11 +1,12 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { getMeetings, getLocations } from "@/services/api";
 import AiSearchBar from "@/components/AiSearchBar.vue";
 import MeetingCard from "@/components/MeetingCard.vue";
 import PlaceCard from "@/components/PlaceCard.vue";
 import serviceLogo from "@/assets/moyeou_logo.svg";
+import KakaoMap from "@/components/KakaoMap.vue";
 
 const router = useRouter();
 const meetings = ref([]);
@@ -18,9 +19,7 @@ const suggestions = [
 ];
 
 onMounted(async () => {
-  // 모임 목록(Meetings) 안전하게 가져와서 3개만 자르기
   const meetingsData = await getMeetings();
-  // 백엔드 규격 { items: [...] } 구조인지 검사하여 안전하게 배열만 추출
   const meetingsList =
     meetingsData && meetingsData.items
       ? meetingsData.items
@@ -28,17 +27,19 @@ onMounted(async () => {
         ? meetingsData
         : [];
 
-  meetings.value = meetingsList.slice(0, 3);
+  meetings.value = meetingsList;
 
-  // 장소 목록(Locations) 안전하게 가져와서 3개만 자르기
   const locationsData = await getLocations();
   const locationsList = Array.isArray(locationsData) ? locationsData : [];
 
   places.value = locationsList.slice(0, 3);
 });
 
+const recentMeetings = computed(() => {
+  return meetings.value.slice(0, 4);
+});
+
 function handleSearch(query) {
-  // 검색어를 모임 찾기 페이지로 전달합니다.
   router.push({ path: "/meetings", query: { q: query } });
 }
 </script>
@@ -70,8 +71,13 @@ function handleSearch(query) {
         전체 보기
       </RouterLink>
     </div>
-    <div class="grid gap-5 md:grid-cols-3">
-      <MeetingCard v-for="m in meetings" :key="m.id" :meeting="m" />
+    <div class="grid gap-6 md:grid-cols-12 items-stretch">
+      <div class="md:col-span-5 min-h-[380px] flex">
+        <KakaoMap :meetings="meetings" class="w-full h-full" />
+      </div>
+      <div class="md:col-span-7 grid gap-4 grid-cols-1 sm:grid-cols-2 content-start">
+        <MeetingCard v-for="m in recentMeetings" :key="m.id" :meeting="m" />
+      </div>
     </div>
   </section>
 
