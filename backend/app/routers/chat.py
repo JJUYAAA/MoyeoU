@@ -96,15 +96,25 @@ def chat_and_search(payload: ChatRequest, db: Session = Depends(get_db)):
     # Case1: 'MEETING'일 때
     if target == "MEETING":
         query = db.query(models.Meeting).filter(models.Meeting.status == "OPEN")
+
+        meeting_category_map = {
+            "관광지": "관광",
+            "음식점": "맛집",
+            "문화시설": "문화생활",
+            "레포츠": "운동·산책",
+            "쇼핑": "쇼핑",
+            "여행코스": "여행",
+            "축제공연행사": "문화생활"
+        }
+        search_category = meeting_category_map.get(category, category) if category else None
         
-        if category:
-            query = query.filter(models.Meeting.category == category)
+        if search_category:
+            query = query.filter(models.Meeting.category == search_category)
         if meeting_date:
             query = query.filter(models.Meeting.meeting_date == meeting_date)
             
         # matched_meetings를 matched_data로 변경
         matched_data = query.order_by(models.Meeting.meeting_date.asc(), models.Meeting.meeting_time.asc()).all()
-
         if not matched_data:
             reply = f"원하시는 {category if category else ''} 조건에 맞는 모집 중인 번개 모임이 아직 없네요. 😢 직접 새로운 번개를 만들어 대망의 첫 주최자가 되어 보시는 건 어떨까요?"
         else:
