@@ -23,7 +23,7 @@ const getMappedCategory = (contentType) => {
 
 function createMeetingHere() {
   router.push({
-    path: "/meetings/create",
+    path: "/meetings/new",
     query: {
       loc_id: props.place.id,
       loc_name: props.place.title,
