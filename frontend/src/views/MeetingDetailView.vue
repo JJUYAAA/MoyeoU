@@ -184,7 +184,7 @@ const toggleReplyForm = (commentId) => {
   }
 };
 
-// 최상위 댓글 등록
+// 최상위 댓글 등록 (서버 싱크 업데이트 적용)
 async function submitComment() {
   if (
     !commentForm.value.nickname.trim() ||
@@ -195,26 +195,15 @@ async function submitComment() {
     return;
   }
   try {
-    const savedComment = await createComment(meetingId, {
+    await createComment(meetingId, {
       nickname: commentForm.value.nickname,
       password: commentForm.value.password,
       content: commentForm.value.content,
       parent_id: null,
     });
 
-    if (!meeting.value) {
-      throw new Error("모임 데이터 로드가 완료되지 않았습니다.");
-    }
-
-    if (!meeting.value.comments) {
-      meeting.value.comments = [];
-    }
-
-    if (savedComment) {
-      meeting.value.comments.push(savedComment);
-    } else {
-      throw new Error("API에서 반환된 댓글 데이터가 비어있습니다.");
-    }
+    // 직접 클라이언트 배열에 push하는 대신 데이터베이스 최신 상태 동기화
+    await fetchMeetingData();
 
     commentForm.value = { nickname: "", password: "", content: "" };
   } catch (error) {
@@ -223,7 +212,7 @@ async function submitComment() {
   }
 }
 
-// 대댓글 등록
+// 대댓글 등록 (서버 싱크 업데이트 적용)
 async function submitReply(parentId) {
   if (
     !replyForm.value.nickname.trim() ||
@@ -234,26 +223,15 @@ async function submitReply(parentId) {
     return;
   }
   try {
-    const savedReply = await createComment(meetingId, {
+    await createComment(meetingId, {
       nickname: replyForm.value.nickname,
       password: replyForm.value.password,
       content: replyForm.value.content,
       parent_id: parentId,
     });
 
-    if (!meeting.value) {
-      throw new Error("모임 데이터 로드가 완료되지 않았습니다.");
-    }
-
-    if (!meeting.value.comments) {
-      meeting.value.comments = [];
-    }
-
-    if (savedReply) {
-      meeting.value.comments.push(savedReply);
-    } else {
-      throw new Error("API에서 반환된 답글 데이터가 비어있습니다.");
-    }
+    // 직접 클라이언트 배열에 push하는 대신 데이터베이스 최신 상태 동기화
+    await fetchMeetingData();
 
     activeReplyId.value = null;
   } catch (error) {
@@ -522,7 +500,7 @@ const formatDate = (dateStr) => {
                     {{ reply.content }}
                   </p>
 
-                  <div class="text-left">
+                  <div class="text-right">
                     <button
                       @click="triggerDeleteComment(reply.id)"
                       class="text-[10px] text-red-400 hover:text-red-500 hover:underline font-medium"

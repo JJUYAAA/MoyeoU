@@ -54,6 +54,7 @@ class CommentResponse(BaseModel):
     nickname: str
     content: str
     created_at: datetime
+    parent_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
         
