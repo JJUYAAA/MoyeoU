@@ -424,102 +424,112 @@ const formatDate = (dateStr) => {
           <div
             v-for="comment in rootComments"
             :key="comment.id"
-            class="rounded-xl border border-line bg-white p-5 shadow-sm space-y-3"
+            class="space-y-2"
           >
-            <div class="flex justify-between items-center text-xs">
-              <span class="font-bold text-ink">{{ comment.nickname }}</span>
-              <span class="text-ink/50">{{
-                formatDate(comment.created_at)
-              }}</span>
-            </div>
-
-            <p class="text-sm text-ink/90 whitespace-pre-line">
-              {{ comment.content }}
-            </p>
-
-            <div class="flex gap-3 text-xs text-brand font-medium">
-              <button
-                @click="toggleReplyForm(comment.id)"
-                class="hover:underline"
-              >
-                답글 달기
-              </button>
-              <button
-                @click="triggerDeleteComment(comment.id)"
-                class="text-red-500 hover:underline"
-              >
-                삭제
-              </button>
-            </div>
-
             <div
-              v-if="activeReplyId === comment.id"
-              class="mt-4 p-4 rounded-lg bg-gray-50 border border-line space-y-3"
+              class="rounded-xl border border-line bg-white p-5 shadow-sm space-y-3"
             >
-              <div class="flex gap-2">
-                <input
-                  v-model="replyForm.nickname"
-                  type="text"
-                  placeholder="닉네임"
-                  class="w-1/3 p-2 border rounded-lg text-xs"
-                />
-                <input
-                  v-model="replyForm.password"
-                  type="password"
-                  placeholder="비밀번호"
-                  class="w-2/3 p-2 border rounded-lg text-xs"
-                />
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-bold text-ink">{{ comment.nickname }}</span>
+                <span class="text-ink/50">{{
+                  formatDate(comment.created_at)
+                }}</span>
               </div>
-              <textarea
-                v-model="replyForm.content"
-                placeholder="답글 내용을 입력하세요."
-                class="w-full p-2 border rounded-lg text-xs h-16"
-              ></textarea>
-              <div class="flex justify-end gap-2">
+
+              <p class="text-sm text-ink/90 whitespace-pre-line">
+                {{ comment.content }}
+              </p>
+
+              <div class="flex gap-3 text-xs text-brand font-medium">
                 <button
-                  @click="activeReplyId = null"
-                  class="px-3 py-1 text-xs border bg-white rounded-md"
+                  @click="toggleReplyForm(comment.id)"
+                  class="hover:underline"
                 >
-                  취소
+                  답글 달기
                 </button>
                 <button
-                  @click="submitReply(comment.id)"
-                  class="px-3 py-1 text-xs bg-brand text-white rounded-md font-semibold"
+                  @click="triggerDeleteComment(comment.id)"
+                  class="text-red-500 hover:underline"
                 >
-                  등록
+                  삭제
                 </button>
+              </div>
+
+              <div
+                v-if="activeReplyId === comment.id"
+                class="mt-4 p-4 rounded-lg bg-gray-50 border border-line space-y-3"
+              >
+                <div class="flex gap-2">
+                  <input
+                    v-model="replyForm.nickname"
+                    type="text"
+                    placeholder="닉네임"
+                    class="w-1/3 p-2 border rounded-lg text-xs"
+                  />
+                  <input
+                    v-model="replyForm.password"
+                    type="password"
+                    placeholder="비밀번호"
+                    class="w-2/3 p-2 border rounded-lg text-xs"
+                  />
+                </div>
+                <textarea
+                  v-model="replyForm.content"
+                  placeholder="답글 내용을 입력하세요."
+                  class="w-full p-2 border rounded-lg text-xs h-16"
+                ></textarea>
+                <div class="flex justify-end gap-2">
+                  <button
+                    @click="activeReplyId = null"
+                    class="px-3 py-1 text-xs border bg-white rounded-md"
+                  >
+                    취소
+                  </button>
+                  <button
+                    @click="submitReply(comment.id)"
+                    class="px-3 py-1 text-xs bg-brand text-white rounded-md font-semibold"
+                  >
+                    등록
+                  </button>
+                </div>
               </div>
             </div>
 
             <div
               v-if="getReplies(comment.id).length > 0"
-              class="mt-4 pl-4 border-l-2 border-brand/20 space-y-3"
+              class="pl-10 space-y-2"
             >
               <div
                 v-for="reply in getReplies(comment.id)"
                 :key="reply.id"
-                class="rounded-lg bg-gray-50/80 p-3.5 border border-line/60 space-y-1.5"
+                class="rounded-lg border border-line bg-slate-50 p-4 shadow-xs flex items-start gap-3"
               >
-                <div class="flex justify-between items-center text-xs">
-                  <span class="font-bold text-ink/80 flex items-center gap-1">
-                    <span class="text-brand">↪</span> {{ reply.nickname }}
-                  </span>
-                  <span class="text-ink/40">{{
-                    formatDate(reply.created_at)
-                  }}</span>
-                </div>
+                <span class="text-brand text-sm font-bold select-none pt-0.5"
+                  >↳</span
+                >
 
-                <p class="text-xs text-ink/80 whitespace-pre-line pl-4">
-                  {{ reply.content }}
-                </p>
+                <div class="flex-1 space-y-2">
+                  <div class="flex justify-between items-center text-xs">
+                    <span class="font-bold text-ink/80">{{
+                      reply.nickname
+                    }}</span>
+                    <span class="text-ink/40">{{
+                      formatDate(reply.created_at)
+                    }}</span>
+                  </div>
 
-                <div class="text-right">
-                  <button
-                    @click="triggerDeleteComment(reply.id)"
-                    class="text-[10px] text-red-400 hover:text-red-500 hover:underline"
-                  >
-                    답글 삭제
-                  </button>
+                  <p class="text-xs text-ink/80 whitespace-pre-line">
+                    {{ reply.content }}
+                  </p>
+
+                  <div class="text-left">
+                    <button
+                      @click="triggerDeleteComment(reply.id)"
+                      class="text-[10px] text-red-400 hover:text-red-500 hover:underline font-medium"
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

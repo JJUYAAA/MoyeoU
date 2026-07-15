@@ -48,7 +48,6 @@ def create_meeting(
         **payload.model_dump(),
         current_participants=1,
         status="OPEN",
-        
     )
 
     db.add(meeting)

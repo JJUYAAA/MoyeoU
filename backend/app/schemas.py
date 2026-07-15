@@ -45,6 +45,7 @@ class CommentCreate(BaseModel):
     nickname: str = Field(..., min_length=1, max_length=20, description="댓글 작성자 닉네임")
     content: str = Field(..., min_length=1, description="댓글 내용")
     password: str = Field(..., min_length=4, description="삭제 시 검증할 비밀번호")
+    parent_id: Optional[int] = None
         
 # 댓글 응답용
 class CommentResponse(BaseModel):
