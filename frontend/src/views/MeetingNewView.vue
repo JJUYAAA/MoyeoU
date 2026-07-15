@@ -41,12 +41,65 @@ onMounted(() => {
 });
 
 async function submit() {
-  // 💡 백엔드로 보낼 때 location_id 정보까지 묶어서 안전하게 API 전송!
-  await createMeeting({ ...form.value });
-  submitted.value = true;
+  // 간단한 유효성 검사 (form 태그를 div로 바꿨기 때문에 직접 검증을 한 번 수행해 줍니다)
+  if (
+    !form.value.title ||
+    !form.value.date ||
+    !form.value.time ||
+    !form.value.location ||
+    !form.value.password
+  ) {
+    alert("필수 입력 항목(*)을 모두 입력해 주세요!");
+    return;
+  }
 
-  // 성공 메시지를 보여준 뒤 모임 목록으로 이동
-  setTimeout(() => router.push("/meetings"), 1200);
+  try {
+    // 1. 날짜 데이터 포맷 안정화 (백엔드는 YYYY-MM-DD 포맷을 기대합니다)
+    let formattedDate = form.value.date;
+    if (formattedDate === "오늘") {
+      formattedDate = new Date().toISOString().split("T")[0];
+    } else if (formattedDate === "내일") {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      formattedDate = tomorrow.toISOString().split("T")[0];
+    } else {
+      // 직접 입력했을 경우, 기입 형식이 안 맞으면 에러 방지를 위해 기본값 처리 혹은 파싱
+      const dateReg = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateReg.test(formattedDate)) {
+        // YYYY-MM-DD 형식이 아니면 일단 오늘 날짜로 보정하여 전송 실패 차단
+        formattedDate = new Date().toISOString().split("T")[0];
+      }
+    }
+
+    // 2. 시간 데이터 포맷 안정화 (HH:MM:SS 형식 확보)
+    let formattedTime = form.value.time; // 예: "15:30"
+    if (formattedTime && formattedTime.split(":").length === 2) {
+      formattedTime = `${formattedTime}:00`; // 초(second) 정보가 없으면 ":00" 붙여서 "15:30:00" 포맷 완성
+    }
+
+    // 3. 백엔드 최종 규격 100% 일치 매핑 객체 (Payload)
+    const backendPayload = {
+      title: form.value.title,
+      category: form.value.category,
+      meeting_date: formattedDate, // Date 타입 매핑
+      meeting_time: formattedTime, // Time 타입 매핑
+      location_name: form.value.location, // location_name 매핑
+      max_participants: Number(form.value.max), // Integer 타입 변환
+      content: form.value.description || "", // content 매핑 (contentText 아님!)
+      password: form.value.password,
+      location_id: form.value.location_id || null, // 공공데이터 연동 ID
+    };
+
+    // 4. API 전송 실행 (api.js의 axios.post 호출)
+    await createMeeting(backendPayload);
+    submitted.value = true;
+
+    // 성공 시 모임 목록 화면으로 이동
+    setTimeout(() => router.push("/meetings"), 1200);
+  } catch (error) {
+    console.error("모임 생성 실패 디버깅 로그:", error);
+    alert("모임 등록 규격이 올바르지 않습니다. 다시 시도해 주세요!");
+  }
 }
 </script>
 
@@ -58,9 +111,9 @@ async function submit() {
       모임이 등록되었어요! 목록으로 이동합니다...
     </p>
 
-    <form class="space-y-5 rounded-xl border border-line bg-white p-6" @submit.prevent="submit">
+    <div class="space-y-5 rounded-xl border border-line bg-white p-6">
       <div>
-        <label class="field-label">제목</label>
+        <label class="field-label">제목 *</label>
         <input
           v-model="form.title"
           type="text"
@@ -79,7 +132,7 @@ async function submit() {
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label class="field-label">날짜</label>
+          <label class="field-label">날짜 *</label>
           <input
             v-model="form.date"
             type="text"
@@ -89,13 +142,13 @@ async function submit() {
           />
         </div>
         <div>
-          <label class="field-label">시간</label>
+          <label class="field-label">시간 *</label>
           <input v-model="form.time" type="time" required class="field-input" />
         </div>
       </div>
 
       <div>
-        <label class="field-label">장소</label>
+        <label class="field-label">장소 *</label>
         <input
           v-model="form.location"
           type="text"
@@ -109,7 +162,7 @@ async function submit() {
       </div>
 
       <div>
-        <label class="field-label">최대 모집 인원</label>
+        <label class="field-label">최대 모집 인원 *</label>
         <input
           v-model.number="form.max"
           type="number"
@@ -131,7 +184,7 @@ async function submit() {
       </div>
 
       <div>
-        <label class="field-label">수정·삭제용 비밀번호</label>
+        <label class="field-label">수정·삭제용 비밀번호 *</label>
         <input
           v-model="form.password"
           type="password"
@@ -141,7 +194,7 @@ async function submit() {
         />
       </div>
 
-      <button type="submit" class="btn-primary w-full">모임 등록하기</button>
-    </form>
+      <button type="button" class="btn-primary w-full" @click="submit">모임 등록하기</button>
+    </div>
   </div>
 </template>
