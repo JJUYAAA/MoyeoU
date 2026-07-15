@@ -1,4 +1,5 @@
 import os
+import traceback 
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -14,11 +15,9 @@ router = APIRouter(
     tags=["Chat"]
 )
 
-# --- OpenAI가 추출할 검색 조건의 규격을 정의하는 Pydantic 스키마 ---
 class SearchConditions(BaseModel):
     category: Optional[str] = Field(
         None, 
-        # 💡 프론트엔드 매핑 기준 ['관광', '문화생활', '운동·산책', '맛집', '쇼핑', '여행'] 과 100% 동기화!
         description="모임 카테고리. 반드시 다음 6개 명칭 중 정확히 하나를 선택해야 함: '관광', '문화생활', '운동·산책', '맛집', '쇼핑', '여행'"
     )
     meeting_date: Optional[str] = Field(
@@ -31,29 +30,25 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
-    matched_meetings: List[schemas.MeetingResponse] # 💡 프론트엔드에서 MeetingCard로 렌더링할 모임 목록
+    matched_meetings: List[schemas.MeetingResponse]
 
-
-# --- 💬 OpenAI 연동 실시간 챗봇 및 검색 API ---
 @router.post("", response_model=ChatResponse)
 def chat_and_search(payload: ChatRequest, db: Session = Depends(get_db)):
-    # 🚨 .env에 OPENAI_API_KEY가 등록되어 있지 않으면 임시 에러 핸들링
+    # API 키 상태 실시간 터미널 로깅 추가
+    print(f"[디버깅] 로드된 API KEY 앞부분: {str(settings.OPENAI_API_KEY)[:10]}...")
+
     if not settings.OPENAI_API_KEY or "sk-" not in settings.OPENAI_API_KEY:
         raise HTTPException(
             status_code=500, 
             detail="OpenAI API 키가 설정되지 않았습니다. .env 파일을 확인해 주세요."
         )
 
-    # 1. OpenAI 클라이언트 초기화
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    
-    # 💡 하드코딩 대신 파이썬 내장 모듈로 진짜 "오늘 날짜"를 구해서 gpt에게 제공합니다.
     today_str = str(date.today()) 
 
     try:
-        # 2. System Prompt를 통해 자연어 질문에서 카테고리와 날짜 추출 지시
         completion = client.beta.chat.completions.parse(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=[
                 {
                     "role": "system", 
@@ -65,18 +60,19 @@ def chat_and_search(payload: ChatRequest, db: Session = Depends(get_db)):
                 },
                 {"role": "user", "content": payload.message}
             ],
-            response_format=SearchConditions, # Pydantic 모델 주입
+            response_format=SearchConditions,
         )
         
-        # 구조화된 추출 데이터 가져오기
         extracted_data = completion.choices[0].message.parsed
         category = extracted_data.category
         meeting_date = extracted_data.meeting_date
 
     except Exception as e:
+        # 💡 터미널에 시원하게 에러 이유와 몇 번째 줄에서 터졌는지 다 찍어줍니다.
+        print("❌ [OpenAI API 연동 에러 발생 로그]")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"OpenAI 분석 중 에러가 발생했습니다: {str(e)}")
 
-    # 3. 추출된 조건으로 SQLite DB 조회 (status가 OPEN인 모임만 필터)
     query = db.query(models.Meeting).filter(models.Meeting.status == "OPEN")
     
     if category:
@@ -84,10 +80,8 @@ def chat_and_search(payload: ChatRequest, db: Session = Depends(get_db)):
     if meeting_date:
         query = query.filter(models.Meeting.meeting_date == meeting_date)
         
-    # 최신 모임 순서대로 정렬하여 출력합니다.
     matched_meetings = query.order_by(models.Meeting.meeting_date.asc(), models.Meeting.meeting_time.asc()).all()
 
-    # 4. 자연어 답변 생성
     if not matched_meetings:
         reply = f"원하시는 {category if category else ''} 조건에 맞는 모집 중인 번개 모임이 아직 없네요. 😢 직접 새로운 번개를 만들어 대망의 첫 주최자가 되어 보시는 건 어떨까요?"
     else:
