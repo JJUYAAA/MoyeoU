@@ -1,13 +1,21 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, watch } from "vue";
 import lightningIcon from "@/assets/lightning.svg";
+
+const props = defineProps({
+  meetings: {
+    type: Array,
+    default: () => [],
+  },
+});
 
 const mapContainer = ref(null);
 let map = null;
+let clusterer = null;
 
 const dummyMeetings = [
-  { id: 1, title: "치맥할 SSAFY 동료 구함 🍗", lat: 36.3504, lng: 127.3845 },
-  { id: 2, title: "알고리즘 모각코 하실 분 💻", lat: 36.3508, lng: 127.3852 },
+  { id: 1, title: "치맥할 SSAFY 동료 구함 🍗", latitude: 36.3504, longitude: 127.3845 },
+  { id: 2, title: "알고리즘 모각코 하실 분 💻", latitude: 36.3508, longitude: 127.3852 },
 ];
 
 onMounted(() => {
@@ -34,7 +42,7 @@ const initMap = () => {
 
   map = new window.kakao.maps.Map(container, options);
 
-  const clusterer = new window.kakao.maps.MarkerClusterer({
+  clusterer = new window.kakao.maps.MarkerClusterer({
     map: map,
     averageCenter: true,
     minLevel: 5,
@@ -53,32 +61,58 @@ const initMap = () => {
     ],
   });
 
-  const markers = dummyMeetings.map((meeting) => {
-    const imageSrc = lightningIcon;
-    const imageSize = new window.kakao.maps.Size(40, 40);
-    const imageOption = { offset: new window.kakao.maps.Point(20, 40) };
+  if (props.meetings && props.meetings.length > 0) {
+    updateMarkers(props.meetings);
+  } else {
+    updateMarkers(dummyMeetings);
+  }
+};
 
-    const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+const updateMarkers = (meetingsList) => {
+  if (!map || !clusterer) return;
 
-    const marker = new window.kakao.maps.Marker({
-      position: new window.kakao.maps.LatLng(meeting.lat, meeting.lng),
-      image: markerImage,
+  clusterer.clear();
+
+  const markers = meetingsList
+    .filter((m) => m.latitude && m.longitude)
+    .map((meeting) => {
+      const imageSrc = lightningIcon;
+      const imageSize = new window.kakao.maps.Size(40, 40);
+      const imageOption = { offset: new window.kakao.maps.Point(20, 40) };
+
+      const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
+
+      const marker = new window.kakao.maps.Marker({
+        position: new window.kakao.maps.LatLng(meeting.latitude, meeting.longitude),
+        image: markerImage,
+      });
+
+      const infowindow = new window.kakao.maps.InfoWindow({
+        content: `<div style="padding:10px;font-size:12px;font-weight:600;min-width:150px;text-align:center;">${meeting.title}</div>`,
+        removable: true,
+      });
+
+      window.kakao.maps.event.addListener(marker, "click", () => {
+        infowindow.open(map, marker);
+      });
+
+      return marker;
     });
-
-    const infowindow = new window.kakao.maps.InfoWindow({
-      content: `<div style="padding:10px;font-size:12px;font-weight:600;min-width:150px;text-align:center;">${meeting.title}</div>`,
-      removable: true,
-    });
-
-    window.kakao.maps.event.addListener(marker, "click", () => {
-      infowindow.open(map, marker);
-    });
-
-    return marker;
-  });
 
   clusterer.addMarkers(markers);
 };
+
+watch(
+  () => props.meetings,
+  (newMeetings) => {
+    if (newMeetings && newMeetings.length > 0) {
+      updateMarkers(newMeetings);
+    } else {
+      updateMarkers(dummyMeetings);
+    }
+  },
+  { deep: true },
+);
 </script>
 
 <template>
