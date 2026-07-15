@@ -90,7 +90,7 @@ export async function leaveMeeting(meetingId, leaveData) {
   try {
     const res = await axios.post(`${API_BASE_URL}/api/meetings/${meetingId}/leave`, leaveData);
 
-    if (res.status === 200) {
+    if (res.status === 204) {
       console.log("응답 성공: ", res.data);
       return res.data;
     }

@@ -173,12 +173,6 @@ class Participant(Base):
         String(30),
         nullable=False,
     )
-    
-    email = Column(
-        String(100),
-        nullable=False,
-        index=True, # 빠른 검색을 위해 인덱스 추가
-    )
 
     # 참여 취소 확인용 비밀번호
     # API 응답에는 절대 포함하지 않음

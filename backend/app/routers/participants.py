@@ -58,7 +58,7 @@ def join_meeting(
     # 모임 테이블의 현재 인원 증가 및 상태 변경 적용
     meeting.current_participants += 1
     if meeting.current_participants >= meeting.max_participants:
-        meeting.status = "FULL"
+        meeting.status = "CLOSED"
 
     db.commit()
     db.refresh(participant)
@@ -85,7 +85,6 @@ def leave_meeting(
     participant = db.scalar(
         select(Participant).where(
             Participant.meeting_id == meeting_id,
-            Participant.email == payload.email
         )
     )
     if participant is None:
