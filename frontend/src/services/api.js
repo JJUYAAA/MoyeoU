@@ -18,6 +18,13 @@ export async function getLocations() {
 export async function getMeetings() {
   try {
     const res = await axios.get(`${API_BASE_URL}/api/meetings`);
+
+    if (res.status == 200) {
+      console.log("응답 성공: ", res.data);
+    } else {
+      console.log("응답 실패: ", res.data);
+    }
+
     return res.data;
   } catch (error) {
     console.error("[API Error] getMeetings 실패:", error);
@@ -29,6 +36,11 @@ export async function getMeetings() {
 export async function getMeetingById(id) {
   try {
     const res = await axios.get(`${API_BASE_URL}/api/meetings/${id}`);
+
+    if (res.status == 200) {
+      console.log("응답 성공: ", res.data);
+    }
+
     return res.data;
   } catch (error) {
     console.error(`[API Error] getMeetingById (${id}) 실패:`, error);
@@ -40,9 +52,94 @@ export async function getMeetingById(id) {
 export async function createMeeting(data) {
   try {
     const res = await axios.post(`${API_BASE_URL}/api/meetings`, data);
+
+    if (res.status == 200) {
+      console.log("응답 성공: ", res.data);
+    } else {
+      console.log("응답 실패: ", res.data);
+    }
+
     return res.data;
   } catch (error) {
     console.error("[API Error] createMeeting 실패:", error);
+    throw error;
+  }
+}
+
+// 모임 참여 신청 (POST)
+export async function joinMeeting(meetingId, participantData) {
+  const API_NAME = `joinMeeting(MeetingID: ${meetingId})`;
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/meetings/${meetingId}/join`, participantData);
+
+    if (res.status === 201 || res.status === 200) {
+      console.log("응답 성공: ", res.data);
+      return res.data;
+    }
+
+    throw new Error(`Unexpected status code: ${res.status}`);
+  } catch (error) {
+    console.error("[API Error] joinMeeting 실패:", error);
+    throw error;
+  }
+}
+
+// 모임 참여 취소 (POST)
+export async function leaveMeeting(meetingId, leaveData) {
+  const API_NAME = `leaveMeeting(MeetingID: ${meetingId})`;
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/meetings/${meetingId}/leave`, leaveData);
+
+    if (res.status === 200) {
+      console.log("응답 성공: ", res.data);
+      return res.data;
+    }
+
+    throw new Error(`Unexpected status code: ${res.status}`);
+  } catch (error) {
+    console.error("[API Error] leaveMeeting 실패:", error);
+    throw error;
+  }
+}
+
+// 댓글 작성 (POST)
+export async function createComment(meetingId, commentData) {
+  const API_NAME = `createComment(MeetingID: ${meetingId})`;
+  try {
+    const res = await axios.post(`${API_BASE_URL}/api/meetings/${meetingId}/comments`, commentData);
+
+    if (res.status === 201 || res.status === 200) {
+      console.log("응답 성공: ", res.data);
+      return res.data;
+    }
+
+    throw new Error(`Unexpected status code: ${res.status}`);
+  } catch (error) {
+    logError(API_NAME, error);
+    throw error;
+  }
+}
+
+// 댓글 삭제 (DELETE)
+export async function deleteComment(meetingId, commentId, deleteData) {
+  const API_NAME = `deleteComment(MeetingID: ${meetingId}, CommentID: ${commentId})`;
+  try {
+    const res = await axios.delete(
+      `${API_BASE_URL}/api/meetings/${meetingId}/comments/${commentId}`,
+      {
+        data: deleteData,
+      },
+    );
+
+    // 댓글 삭제 시 성공 응답은 보통 204 No Content 혹은 200 OK입니다.
+    if (res.status === 204 || res.status === 200) {
+      console.log("응답 성공: ", res.data);
+      return res.data;
+    }
+
+    throw new Error(`Unexpected status code: ${res.status}`);
+  } catch (error) {
+    console.error(error);
     throw error;
   }
 }

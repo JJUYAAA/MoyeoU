@@ -11,7 +11,8 @@ router = APIRouter(
     tags=["participants"],
 )
 
-# 모임 참여 신청 (Join)
+# backend/app/routers/participants.py 일부
+
 @router.post("/{meeting_id}/join", response_model=ParticipantResponse, status_code=status.HTTP_201_CREATED)
 def join_meeting(
     meeting_id: int,
@@ -33,25 +34,24 @@ def join_meeting(
             detail="이미 정원이 초과되어 신청할 수 없습니다.",
         )
 
-    # 동일 이메일 중복 참여 여부 확인
+    # 동일 닉네임으로 중복 참여 여부 확인 (이메일 대신 닉네임으로 검증 진행)
     existing_participant = db.scalar(
         select(Participant).where(
             Participant.meeting_id == meeting_id,
-            Participant.email == payload.email
+            Participant.nickname == payload.nickname
         )
     )
     if existing_participant:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="이미 이 모임에 참여 신청을 완료한 이메일입니다.",
+            detail="이미 이 모임에 참여 신청을 완료한 닉네임입니다.",
         )
 
-    # 참여자 등록
+    # 참여자 등록 
     participant = Participant(
         meeting_id=meeting_id,
         nickname=payload.nickname,
-        email=payload.email,
-        password=payload.password, # 취소용 비밀번호 (평문 저장)
+        password=payload.password, # 취소용 비밀번호
     )
     db.add(participant)
 
