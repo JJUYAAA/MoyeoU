@@ -39,7 +39,7 @@ export async function getMeetingById(id) {
 // 새로운 모임 등록
 export async function createMeeting(data) {
   try {
-    const res = await axios.get(`${API_BASE_URL}/api/meetings`, data);
+    const res = await axios.post(`${API_BASE_URL}/api/meetings`, data);
     return res.data;
   } catch (error) {
     console.error("[API Error] createMeeting 실패:", error);
