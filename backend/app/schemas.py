@@ -10,11 +10,12 @@ from datetime import date, datetime, time
 
 # 모집 카테고리
 Category = Literal[
-    "모각코·공부",
-    "식사·카페",
-    "운동",
-    "문화·행사",
-    "나들이",
+    "관광",
+    "문화생활",
+    "운동·산책",
+    "맛집",
+    "쇼핑",
+    "여행",
 ]
 
 # 모집 상태
@@ -39,7 +40,27 @@ class LocationResponse(LocationBase):
     class Config:
         from_attributes = True
 
-# 생성·수정·응답에서 공통으로 사용하는 모임 필드
+# 댓글 생성 요청
+class CommentCreate(BaseModel):
+    nickname: str = Field(..., min_length=1, max_length=20, description="댓글 작성자 닉네임")
+    content: str = Field(..., min_length=1, description="댓글 내용")
+    password: str = Field(..., min_length=4, description="삭제 시 검증할 비밀번호")
+        
+# 댓글 응답용
+class CommentResponse(BaseModel):
+    id: int
+    meeting_id: int
+    nickname: str
+    content: str
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+        
+# 댓글 삭제 요청
+class CommentDelete(BaseModel):
+    password: str = Field(..., description="생성 시 설정했던 비밀번호")
+
+# 생성·수정·응답에서 공통으로 사용하는 모임 베이스 필드
 class MeetingBase(BaseModel):
     title: str = Field(
         min_length=2,
@@ -76,12 +97,8 @@ class MeetingBase(BaseModel):
         value: str,
     ) -> str:
         value = value.strip()
-
         if not value:
-            raise ValueError(
-                "공백만 입력할 수 없습니다."
-            )
-
+            raise ValueError("공백만 입력할 수 없습니다.")
         return value
     
 # 모임 생성 요청
@@ -98,57 +115,19 @@ class MeetingCreate(MeetingBase):
         value: date,
     ) -> date:
         if value < date.today():
-            raise ValueError(
-                "과거 날짜로 모임을 만들 수 없습니다."
-            )
-
+            raise ValueError("과거 날짜로 모임을 만들 수 없습니다.")
         return value
-    
-# 댓글 생성
-class CommentCreate(BaseModel):
-    nickname: str = Field(..., min_length=1, max_length=20, description="댓글 작성자 닉네임")
-    content: str = Field(..., min_length=1, description="댓글 내용")
-    password: str = Field(..., min_length=4, description="삭제 시 검증할 비밀번호")
-    
-# 댓글 답글
-class CommentResponse(BaseModel):
-    id: int
-    meeting_id: int
-    nickname: str
-    content: str
-    created_at: datetime
 
-    model_config = {"from_attributes": True}
-        
-# 댓글 삭제
-class CommentDelete(BaseModel):
-    password: str = Field(..., description="생성 시 설정했던 비밀번호")
-
+# 모임 상세 조회 응답 (댓글 목록 포함)
 class MeetingResponse(MeetingBase):
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
     id: int
     current_participants: int
     status: MeetingStatus
     created_at: datetime
     updated_at: datetime
-    
     comments: List[CommentResponse] = []
     
-    model_config = {"from_attributes": True}
-    
-# 모임 비밀번호 확인 요청
-class PasswordRequest(BaseModel):
-    password: str = Field(
-        min_length=4,
-        max_length=100,
-    )
-
-# 모임 비밀번호 확인 응답
-class MessageResponse(BaseModel):
-    message: str    
+    model_config = ConfigDict(from_attributes=True)
 
 # 모임 수정 요청
 class MeetingUpdate(MeetingBase):
@@ -164,40 +143,17 @@ class MeetingUpdate(MeetingBase):
         value: date,
     ) -> date:
         if value < date.today():
-            raise ValueError(
-                "과거 날짜로 모임을 수정할 수 없습니다."
-            )
-
+            raise ValueError("과거 날짜로 모임을 수정할 수 없습니다.")
         return value
     
-# 모집 목록 응답
+# 모임 목록 조회 결과 응답
 class MeetingListResponse(BaseModel):
     items: list[MeetingResponse]
     total: int
     page: int
     size: int
 
-# 참여 신청 요청
-class ParticipantJoin(BaseModel):
-    nickname: str = Field(
-        min_length=1,
-        max_length=30,
-    )
-    password: str = Field(
-        min_length=4,
-        max_length=100,
-    )
-    
-# 참여 응답
-class ParticipantResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    meeting_id: int
-    nickname: str
-    created_at: datetime
-    
-# 모임 참여 신청
+# 모임 참여 신청 요청
 class ParticipantJoin(BaseModel):
     nickname: str = Field(..., min_length=1, max_length=20, description="참여자 닉네임")
     email: EmailStr = Field(..., description="참여자 이메일 (중복 방지 및 식별용)")
@@ -208,7 +164,7 @@ class ParticipantLeave(BaseModel):
     email: EmailStr = Field(..., description="신청 시 입력한 이메일")
     password: str = Field(..., description="신청 시 입력한 비밀번호")
    
-# 참여자 응답 
+# 참여자 처리 응답용
 class ParticipantResponse(BaseModel):
     id: int
     meeting_id: int
@@ -216,5 +172,15 @@ class ParticipantResponse(BaseModel):
     email: EmailStr
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+    
+ # 모임 비밀번호 확인 요청
+class PasswordRequest(BaseModel):
+    password: str = Field(
+        min_length=4,
+        max_length=100,
+    )
+
+# 일반적인 성공 메시지 응답용
+class MessageResponse(BaseModel):
+    message: str
