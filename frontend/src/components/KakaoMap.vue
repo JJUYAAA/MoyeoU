@@ -13,11 +13,6 @@ const mapContainer = ref(null);
 let map = null;
 let clusterer = null;
 
-const dummyMeetings = [
-  { id: 1, title: "치맥할 SSAFY 동료 구함 🍗", latitude: 36.3504, longitude: 127.3845 },
-  { id: 2, title: "알고리즘 모각코 하실 분 💻", latitude: 36.3508, longitude: 127.3852 },
-];
-
 onMounted(() => {
   if (window.kakao && window.kakao.maps) {
     window.kakao.maps.load(initMap);
@@ -35,12 +30,28 @@ const initMap = () => {
   const container = mapContainer.value;
   if (!container) return;
 
+  // 대전 캠퍼스 중심 좌표 정의
+  const campusLatLng = new window.kakao.maps.LatLng(36.3553675622378, 127.298408300646);
+
   const options = {
-    center: new window.kakao.maps.LatLng(36.3504, 127.3845),
+    center: campusLatLng,
     level: 4,
   };
 
   map = new window.kakao.maps.Map(container, options);
+
+  // 캠퍼스 위치 하이라이트 고정 마커 생성
+  const campusMarker = new window.kakao.maps.Marker({
+    position: campusLatLng,
+    map: map,
+  });
+
+  // 캠퍼스 마커 위에 말풍선 추가
+  const campusInfoWindow = new window.kakao.maps.InfoWindow({
+    position: campusLatLng,
+    content: `<div style="padding:5px 10px;font-size:12px;font-weight:bold;color:#ef4444;text-align:center;">📍삼성화재 유성연수원</div>`,
+  });
+  campusInfoWindow.open(map, campusMarker);
 
   clusterer = new window.kakao.maps.MarkerClusterer({
     map: map,
