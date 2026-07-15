@@ -24,7 +24,8 @@ const showLeaveModal = ref(false);
 const joined = ref(false);
 const left = ref(false);
 
-const joinForm = ref({ nickname: "", email: "", password: "" });
+// 이메일 필드 제거
+const joinForm = ref({ nickname: "", password: "" });
 const leaveForm = ref({ nickname: "", password: "" });
 
 const isSubmitting = ref(false);
@@ -56,11 +57,10 @@ onMounted(async () => {
 // 모임 참여 신청 API 연동
 async function join() {
   const nicknameVal = joinForm.value.nickname.trim();
-  const emailVal = joinForm.value.email.trim();
   const passwordVal = joinForm.value.password;
 
-  if (!nicknameVal || !emailVal || !passwordVal) {
-    alert("닉네임, 이메일, 참여 비밀번호를 모두 입력해 주세요!");
+  if (!nicknameVal || !passwordVal) {
+    alert("닉네임과 참여 비밀번호를 모두 입력해 주세요!");
     return;
   }
 
@@ -71,9 +71,9 @@ async function join() {
 
   isSubmitting.value = true;
   try {
+    // 닉네임과 패스워드만 담아 전송
     await joinMeeting(meetingId, {
       nickname: nicknameVal,
-      email: emailVal,
       password: passwordVal,
     });
 
@@ -133,7 +133,7 @@ function closeModal() {
   showLeaveModal.value = false;
   joined.value = false;
   left.value = false;
-  joinForm.value = { nickname: "", email: "", password: "" };
+  joinForm.value = { nickname: "", password: "" };
   leaveForm.value = { nickname: "", password: "" };
 }
 
@@ -492,15 +492,6 @@ const formatDate = (dateStr) => {
             type="text"
             class="field-input w-full p-2 border rounded-lg"
             placeholder="사용할 닉네임"
-          />
-        </div>
-        <div>
-          <label class="field-label text-sm font-semibold block mb-1">이메일 주소</label>
-          <input
-            v-model="joinForm.email"
-            type="email"
-            class="field-input w-full p-2 border rounded-lg"
-            placeholder="example@email.com"
           />
         </div>
         <div>
