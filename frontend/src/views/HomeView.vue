@@ -6,6 +6,7 @@ import AiSearchBar from "@/components/AiSearchBar.vue";
 import MeetingCard from "@/components/MeetingCard.vue";
 import PlaceCard from "@/components/PlaceCard.vue";
 import serviceLogo from "@/assets/moyeou_logo.svg";
+import KakaoMap from "@/components/KakaoMap.vue";
 
 const router = useRouter();
 const meetings = ref([]);
@@ -73,8 +74,13 @@ function handleSearch(query) {
         전체 보기
       </RouterLink>
     </div>
-    <div class="grid gap-5 md:grid-cols-3">
-      <MeetingCard v-for="m in meetings" :key="m.id" :meeting="m" />
+    <div class="grid gap-6 md:grid-cols-3">
+      <div class="md:col-span-1 min-h-[350px] flex">
+        <KakaoMap class="w-full h-full" />
+      </div>
+      <div class="md:col-span-2 space-y-4">
+        <MeetingCard v-for="m in meetings" :key="m.id" :meeting="m" />
+      </div>
     </div>
   </section>
 
