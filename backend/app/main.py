@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.config import settings
-from app.routers import chat, locations, meetings, participants
+from app.routers import chat, locations, meetings, participants, comments
 
 # 서버 시작 시 SQLite 테이블 자동 생성
 Base.metadata.create_all(bind=engine)
@@ -25,6 +25,7 @@ app.include_router(locations.router)
 app.include_router(chat.router)
 app.include_router(meetings.router)
 app.include_router(participants.router)
+app.include_router(comments.router)
 
 @app.get("/")
 def health_check():

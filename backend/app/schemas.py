@@ -103,6 +103,26 @@ class MeetingCreate(MeetingBase):
             )
 
         return value
+    
+# 댓글 생성
+class CommentCreate(BaseModel):
+    nickname: str = Field(..., min_length=1, max_length=20, description="댓글 작성자 닉네임")
+    content: str = Field(..., min_length=1, description="댓글 내용")
+    password: str = Field(..., min_length=4, description="삭제 시 검증할 비밀번호")
+    
+# 댓글 답글
+class CommentResponse(BaseModel):
+    id: int
+    meeting_id: int
+    nickname: str
+    content: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+        
+# 댓글 삭제
+class CommentDelete(BaseModel):
+    password: str = Field(..., description="생성 시 설정했던 비밀번호")
 
 class MeetingResponse(MeetingBase):
     model_config = ConfigDict(
@@ -114,7 +134,11 @@ class MeetingResponse(MeetingBase):
     status: MeetingStatus
     created_at: datetime
     updated_at: datetime
-
+    
+    comments: List[CommentResponse] = []
+    
+    model_config = {"from_attributes": True}
+    
 # 모임 비밀번호 확인 요청
 class PasswordRequest(BaseModel):
     password: str = Field(
