@@ -60,9 +60,6 @@ function handleSearch(query) {
       <p class="mx-auto mt-4 max-w-2xl text-pretty text-lg leading-relaxed text-ink/70">
         모각코·CS 스터디부터 프로젝트 팀원, 점심 메이트, 러닝까지. 같은 기수 동료들과 번개로 모여요.
       </p>
-      <div class="mx-auto mt-8 max-w-2xl w-full">
-        <AiSearchBar :suggestions="suggestions" @search="handleSearch" />
-      </div>
     </div>
   </section>
 
