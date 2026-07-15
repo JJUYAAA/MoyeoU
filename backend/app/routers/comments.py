@@ -30,6 +30,7 @@ def create_comment(
         nickname=payload.nickname,
         content=payload.content,
         password=payload.password,
+        parent_id=payload.parent_id,
     )
     db.add(db_comment)
     db.commit()

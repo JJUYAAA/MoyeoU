@@ -45,6 +45,7 @@ class CommentCreate(BaseModel):
     nickname: str = Field(..., min_length=1, max_length=20, description="댓글 작성자 닉네임")
     content: str = Field(..., min_length=1, description="댓글 내용")
     password: str = Field(..., min_length=4, description="삭제 시 검증할 비밀번호")
+    parent_id: Optional[int] = None
         
 # 댓글 응답용
 class CommentResponse(BaseModel):
@@ -53,6 +54,7 @@ class CommentResponse(BaseModel):
     nickname: str
     content: str
     created_at: datetime
+    parent_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
         
@@ -85,6 +87,15 @@ class MeetingBase(BaseModel):
         default=None,
         max_length=100,
     )
+  
+    map_y: float | None = Field(
+        default=None,
+        description="모임 장소의 위도 (Y 좌표) - 지정하지 않을 시 Null 허용"
+    )
+    map_x: float | None = Field(
+        default=None,
+        description="모임 장소의 경도 (X 좌표) - 지정하지 않을 시 Null 허용"
+    )
 
     @field_validator(
         "title",
@@ -101,13 +112,13 @@ class MeetingBase(BaseModel):
             raise ValueError("공백만 입력할 수 없습니다.")
         return value
     
-# 모임 생성 요청
+# 모임 생성 요청 (MeetingBase 상속으로 자동으로 map_y, map_x 포함됨)
 class MeetingCreate(MeetingBase):
     password: str = Field(
         min_length=4,
         max_length=100,
     )
-
+    
     @field_validator("meeting_date")
     @classmethod
     def meeting_date_cannot_be_past(
@@ -148,7 +159,7 @@ class MeetingUpdate(MeetingBase):
     
 # 모임 목록 조회 결과 응답
 class MeetingListResponse(BaseModel):
-    items: list[MeetingResponse]
+    items: List[MeetingResponse] # 일관성을 위해 list -> List로 수정
     total: int
     page: int
     size: int
