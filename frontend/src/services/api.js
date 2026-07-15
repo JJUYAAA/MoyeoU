@@ -66,6 +66,46 @@ export async function createMeeting(data) {
   }
 }
 
+// 모임 수정 (PUT)
+export async function updateMeeting(meetingId, updateData) {
+  const API_NAME = `updateMeeting(MeetingID: ${meetingId})`;
+  try {
+    const res = await axios.put(`${API_BASE_URL}/api/meetings/${meetingId}`, updateData);
+
+    if (res.status === 200) {
+      console.log("응답 성공: ", res.data);
+      return res.data;
+    }
+
+    throw new Error(`Unexpected status code: ${res.status}`);
+  } catch (error) {
+    console.error(`[API Error] ${API_NAME} 실패:`, error);
+    throw error;
+  }
+}
+
+// 모임 삭제 (DELETE - body에 password 담아 전송)
+export async function deleteMeeting(meetingId, passwordData) {
+  const API_NAME = `deleteMeeting(MeetingID: ${meetingId})`;
+  try {
+    // Axios의 delete 메서드는 두 번째 인자로 config가 오므로 데이터 본문은 { data: passwordData } 형태로 넘겨줍니다.
+    const res = await axios.delete(`${API_BASE_URL}/api/meetings/${meetingId}`, {
+      data: passwordData,
+    });
+
+    // 삭제 성공 응답은 보통 204 No Content 혹은 200 OK입니다.
+    if (res.status === 200 || res.status === 204) {
+      console.log("응답 성공");
+      return true;
+    }
+
+    throw new Error(`Unexpected status code: ${res.status}`);
+  } catch (error) {
+    console.error(`[API Error] ${API_NAME} 실패:`, error);
+    throw error;
+  }
+}
+
 // 모임 참여 신청 (POST)
 export async function joinMeeting(meetingId, participantData) {
   const API_NAME = `joinMeeting(MeetingID: ${meetingId})`;

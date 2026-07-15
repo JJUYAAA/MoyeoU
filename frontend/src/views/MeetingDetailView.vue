@@ -9,6 +9,8 @@ import {
   deleteComment,
 } from "@/services/api";
 import BaseModal from "@/components/BaseModal.vue";
+import MeetingEditModal from "@/components/MeetingEditModal.vue";
+import MeetingDeleteModal from "@/components/MeetingDeleteModal.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -18,25 +20,32 @@ const meeting = ref(null);
 const loading = ref(true);
 const errorMsg = ref("");
 
-// 참여 및 취소 모달 상태 관리
+// 모달 상태 관리
 const showJoinModal = ref(false);
 const showLeaveModal = ref(false);
+const showEditModal = ref(false); // 수정 모달 노출 상태
+const showDeleteModal = ref(false);
+
 const joined = ref(false);
 const left = ref(false);
+const isSubmitting = ref(false);
 
-// 이메일 필드 제거
+// 입력 폼 상태 관리
 const joinForm = ref({ nickname: "", password: "" });
 const leaveForm = ref({ nickname: "", password: "" });
-
-const isSubmitting = ref(false);
 
 // 댓글 및 대댓글 폼 상태 관리
 const commentForm = ref({ nickname: "", password: "", content: "" });
 const activeReplyId = ref(null);
 const replyForm = ref({ nickname: "", password: "", content: "" });
 
-// 초기 렌더링 시 모임 상세 정보와 댓글 목록 통합 로드 수행
+// 초기 데이터 로드
 onMounted(async () => {
+  await fetchMeetingData();
+});
+
+// 데이터 새로고침
+async function fetchMeetingData() {
   loading.value = true;
   errorMsg.value = "";
   try {
@@ -52,7 +61,13 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
-});
+}
+
+// 수정 완료 콜백 핸들러
+async function onEditSuccess() {
+  showEditModal.value = false;
+  await fetchMeetingData(); // 최신 정보로 리프레시
+}
 
 // 모임 참여 신청 API 연동
 async function join() {
@@ -71,7 +86,6 @@ async function join() {
 
   isSubmitting.value = true;
   try {
-    // 닉네임과 패스워드만 담아 전송
     await joinMeeting(meetingId, {
       nickname: nicknameVal,
       password: passwordVal,
@@ -272,9 +286,26 @@ const formatDate = (dateStr) => {
 
 <template>
   <div class="mx-auto max-w-3xl px-6 py-10">
-    <RouterLink to="/" class="text-sm text-brand hover:text-brand-hover">
-      &larr; 모임 목록으로
-    </RouterLink>
+    <div class="mb-4 flex justify-between items-center">
+      <RouterLink to="/" class="text-sm text-brand hover:text-brand-hover">
+        &larr; 모임 목록으로
+      </RouterLink>
+
+      <div v-if="meeting" class="flex gap-3 text-xs font-semibold">
+        <button
+          @click="showEditModal = true"
+          class="text-ink/60 hover:text-brand hover:underline transition-colors"
+        >
+          수정
+        </button>
+        <button
+          @click="showDeleteModal = true"
+          class="text-red-500 hover:text-red-600 hover:underline transition-colors"
+        >
+          삭제
+        </button>
+      </div>
+    </div>
 
     <p v-if="loading" class="py-16 text-center text-ink/50">불러오는 중...</p>
     <p v-else-if="errorMsg" class="py-16 text-center text-red-500 font-semibold">{{ errorMsg }}</p>
@@ -568,5 +599,18 @@ const formatDate = (dateStr) => {
         </button>
       </div>
     </BaseModal>
+
+    <MeetingEditModal
+      :open="showEditModal"
+      :meeting="meeting"
+      @close="showEditModal = false"
+      @success="onEditSuccess"
+    />
+
+    <MeetingDeleteModal
+      :open="showDeleteModal"
+      :meetingId="meetingId"
+      @close="showDeleteModal = false"
+    />
   </div>
 </template>
