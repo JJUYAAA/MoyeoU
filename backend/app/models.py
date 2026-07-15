@@ -143,6 +143,12 @@ class Meeting(Base):
         back_populates="meeting",
         cascade="all, delete-orphan",
     )
+    
+    comments = relationship(
+        "Comment",
+        back_populates="meeting",
+        cascade="all, delete-orphan",
+    )
 
 # 모임 참여자 테이블
 class Participant(Base):
@@ -167,6 +173,12 @@ class Participant(Base):
         String(30),
         nullable=False,
     )
+    
+    email = Column(
+        String(100),
+        nullable=False,
+        index=True, # 빠른 검색을 위해 인덱스 추가
+    )
 
     # 참여 취소 확인용 비밀번호
     # API 응답에는 절대 포함하지 않음
@@ -184,3 +196,28 @@ class Participant(Base):
         "Meeting",
         back_populates="participants",
     )
+    
+# 댓글 테이블
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    meeting_id = Column(
+        Integer,
+        ForeignKey("meetings.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    nickname = Column(String(30), nullable=False)
+    content = Column(Text, nullable=False)
+
+    # 댓글 삭제용 비밀번호 (평문 저장)
+    password = Column(String(100), nullable=False)
+
+    created_at = Column(
+       DateTime(timezone=True),
+       nullable=False,
+       server_default=func.now(),
+    )
+
+    meeting = relationship("Meeting", back_populates="comments")
