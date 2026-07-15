@@ -1,25 +1,40 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getMeetings, getLocations } from '@/services/api'
-import AiSearchBar from '@/components/AiSearchBar.vue'
-import MeetingCard from '@/components/MeetingCard.vue'
-import PlaceCard from '@/components/PlaceCard.vue'
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { getMeetings, getLocations } from "@/services/api";
+import AiSearchBar from "@/components/AiSearchBar.vue";
+import MeetingCard from "@/components/MeetingCard.vue";
+import PlaceCard from "@/components/PlaceCard.vue";
 
-const router = useRouter()
-const meetings = ref([])
-const places = ref([])
+const router = useRouter();
+const meetings = ref([]);
+const places = ref([]);
 
-const suggestions = ['오늘 모각코 있어?', '점심 같이 먹을 사람', '관통 프로젝트 팀원 구해요']
+const suggestions = ["오늘 모각코 있어?", "점심 같이 먹을 사람", "관통 프로젝트 팀원 구해요"];
 
 onMounted(async () => {
-  meetings.value = (await getMeetings()).slice(0, 3)
-  places.value = (await getLocations()).slice(0, 3)
-})
+  // 모임 목록(Meetings) 안전하게 가져와서 3개만 자르기
+  const meetingsData = await getMeetings();
+  // 백엔드 규격 { items: [...] } 구조인지 검사하여 안전하게 배열만 추출
+  const meetingsList =
+    meetingsData && meetingsData.items
+      ? meetingsData.items
+      : Array.isArray(meetingsData)
+        ? meetingsData
+        : [];
+
+  meetings.value = meetingsList.slice(0, 3);
+
+  // 장소 목록(Locations) 안전하게 가져와서 3개만 자르기
+  const locationsData = await getLocations();
+  const locationsList = Array.isArray(locationsData) ? locationsData : [];
+
+  places.value = locationsList.slice(0, 3);
+});
 
 function handleSearch(query) {
   // 검색어를 모임 찾기 페이지로 전달합니다.
-  router.push({ path: '/meetings', query: { q: query } })
+  router.push({ path: "/meetings", query: { q: query } });
 }
 </script>
 
@@ -27,7 +42,9 @@ function handleSearch(query) {
   <!-- 히어로 -->
   <section class="bg-white">
     <div class="mx-auto max-w-6xl px-6 py-16 text-center">
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-brand-light px-3 py-1 text-sm font-medium text-brand-hover">
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full bg-brand-light px-3 py-1 text-sm font-medium text-brand-hover"
+      >
         SSAFY 대전 캠퍼스 교육생 전용
       </span>
       <h1 class="mt-4 text-balance text-4xl font-bold text-ink md:text-5xl">
