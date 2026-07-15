@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, time
 from typing import Literal
 
 from fastapi import (
@@ -32,19 +32,23 @@ router = APIRouter(
 )
 
 
+# 1. 모임 생성 API (map_y, map_x 포함 저장)
 @router.post(
     "",
     response_model=MeetingResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_201_CREATED
 )
 def create_meeting(
     payload: MeetingCreate,
     db: Session = Depends(get_db),
 ):
+    # payload.model_dump()를 사용하므로 MeetingCreate 스키마에 정의된
+    # map_y, map_x가 자동으로 매핑되어 깔끔하게 데이터베이스에 삽입됩니다.
     meeting = Meeting(
         **payload.model_dump(),
         current_participants=1,
         status="OPEN",
+        
     )
 
     db.add(meeting)
@@ -54,6 +58,7 @@ def create_meeting(
     return meeting
 
 
+# 2. 전체 모임 목록 조회 API
 @router.get(
     "",
     response_model=MeetingListResponse,
@@ -179,7 +184,8 @@ def get_meetings(
         size=size,
     )
 
-# 모임 상세 조회
+
+# 3. 모임 상세 조회 API (응답 스키마에 따라 map_x, map_y 반환)
 @router.get(
     "/{meeting_id}",
     response_model=MeetingResponse,
@@ -201,7 +207,8 @@ def get_meeting_detail(
 
     return meeting
 
-# 모임 수정
+
+# 4. 모임 수정 API (map_y, map_x 필드 정상 반영 보완)
 @router.put(
     "/{meeting_id}",
     response_model=MeetingResponse,
@@ -231,6 +238,7 @@ def update_meeting(
             detail="수정 비밀번호가 일치하지 않습니다.",
         )
 
+    # 정원 수 유효성 체크
     if (
         payload.max_participants
         < meeting.current_participants
@@ -243,12 +251,13 @@ def update_meeting(
             ),
         )
 
-    # 모임 수정 데이터 적용
+    # 비밀번호를 제외한 수정용 딕셔너리 생성
+    # map_y, map_x가 포함되어 있으며 만약 Null(None) 값이 들어와도 그대로 DB에 안전하게 교체
     update_data = payload.model_dump(
         exclude={"password"}
     )
 
-    # 모임 필드 수정
+    # 모임 필드 수정 일괄 적용 (map_y, map_x 포함 반영 완료)
     for field_name, value in update_data.items():
         setattr(
             meeting,
@@ -261,7 +270,8 @@ def update_meeting(
 
     return meeting
 
-# 모임 삭제 
+
+# 5. 모임 삭제 API
 @router.delete(
     "/{meeting_id}",
     response_model=MessageResponse,

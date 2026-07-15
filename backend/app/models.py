@@ -10,6 +10,7 @@ from sqlalchemy import (
     Text,
     Time,
     UniqueConstraint,
+    Numeric,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -118,6 +119,9 @@ class Meeting(Base):
         nullable=True,
         index=True,
     )
+    
+    map_y = Column(Float, nullable=True)
+    map_x = Column(Float, nullable=True)
 
     created_at = Column(
         DateTime(timezone=True),
