@@ -53,7 +53,7 @@ export async function createMeeting(data) {
   try {
     const res = await axios.post(`${API_BASE_URL}/api/meetings`, data);
 
-    if (res.status == 200) {
+    if (res.status == 201) {
       console.log("응답 성공: ", res.data);
     } else {
       console.log("응답 실패: ", res.data);
@@ -70,7 +70,10 @@ export async function createMeeting(data) {
 export async function updateMeeting(meetingId, updateData) {
   const API_NAME = `updateMeeting(MeetingID: ${meetingId})`;
   try {
-    const res = await axios.put(`${API_BASE_URL}/api/meetings/${meetingId}`, updateData);
+    const res = await axios.put(
+      `${API_BASE_URL}/api/meetings/${meetingId}`,
+      updateData,
+    );
 
     if (res.status === 200) {
       console.log("응답 성공: ", res.data);
@@ -89,9 +92,12 @@ export async function deleteMeeting(meetingId, passwordData) {
   const API_NAME = `deleteMeeting(MeetingID: ${meetingId})`;
   try {
     // Axios의 delete 메서드는 두 번째 인자로 config가 오므로 데이터 본문은 { data: passwordData } 형태로 넘겨줍니다.
-    const res = await axios.delete(`${API_BASE_URL}/api/meetings/${meetingId}`, {
-      data: passwordData,
-    });
+    const res = await axios.delete(
+      `${API_BASE_URL}/api/meetings/${meetingId}`,
+      {
+        data: passwordData,
+      },
+    );
 
     // 삭제 성공 응답은 보통 204 No Content 혹은 200 OK입니다.
     if (res.status === 200 || res.status === 204) {
@@ -110,7 +116,10 @@ export async function deleteMeeting(meetingId, passwordData) {
 export async function joinMeeting(meetingId, participantData) {
   const API_NAME = `joinMeeting(MeetingID: ${meetingId})`;
   try {
-    const res = await axios.post(`${API_BASE_URL}/api/meetings/${meetingId}/join`, participantData);
+    const res = await axios.post(
+      `${API_BASE_URL}/api/meetings/${meetingId}/join`,
+      participantData,
+    );
 
     if (res.status === 201 || res.status === 200) {
       console.log("응답 성공: ", res.data);
@@ -128,7 +137,10 @@ export async function joinMeeting(meetingId, participantData) {
 export async function leaveMeeting(meetingId, leaveData) {
   const API_NAME = `leaveMeeting(MeetingID: ${meetingId})`;
   try {
-    const res = await axios.post(`${API_BASE_URL}/api/meetings/${meetingId}/leave`, leaveData);
+    const res = await axios.post(
+      `${API_BASE_URL}/api/meetings/${meetingId}/leave`,
+      leaveData,
+    );
 
     if (res.status === 204) {
       console.log("응답 성공: ", res.data);
@@ -146,7 +158,10 @@ export async function leaveMeeting(meetingId, leaveData) {
 export async function createComment(meetingId, commentData) {
   const API_NAME = `createComment(MeetingID: ${meetingId})`;
   try {
-    const res = await axios.post(`${API_BASE_URL}/api/meetings/${meetingId}/comments`, commentData);
+    const res = await axios.post(
+      `${API_BASE_URL}/api/meetings/${meetingId}/comments`,
+      commentData,
+    );
 
     if (res.status === 201 || res.status === 200) {
       console.log("응답 성공: ", res.data);
@@ -187,7 +202,9 @@ export async function deleteComment(meetingId, commentId, deleteData) {
 // AI 챗봇 검색 통신 연동
 export async function searchChat(query) {
   try {
-    const res = await axios.post(`${API_BASE_URL}/api/chat`, { message: query });
+    const res = await axios.post(`${API_BASE_URL}/api/chat`, {
+      message: query,
+    });
     return res.data;
   } catch (error) {
     console.error("[API Error] searchChat 실패:", error);
