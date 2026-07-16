@@ -4,6 +4,10 @@ from app.database import engine, Base
 from app.config import settings
 from app.routers import chat, locations, meetings, participants, comments
 
+
+# ⚠️ [임시 추가] 서버가 켜질 때 기존 테이블을 무조건 싹 지워버림 (정상 배포 후 바로 삭제 예정)
+Base.metadata.drop_all(bind=engine)
+
 # 서버 시작 시 SQLite 테이블 자동 생성
 Base.metadata.create_all(bind=engine)
 
