@@ -17,18 +17,40 @@ const props = defineProps({
 const mapContainer = ref(null);
 let map = null;
 let clusterer = null;
+let renderedMarkers = [];
 
 onMounted(() => {
-  if (window.kakao && window.kakao.maps && window.kakao.maps.Map) {
-    initMap();
-  } else {
-    const script = document.createElement("script");
-    script.src = `//dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=${import.meta.env.VITE_KAKAO_MAP_API_KEY}&libraries=clusterer`;
-    script.onload = () => {
-      window.kakao.maps.load(initMap);
-    };
-    document.head.appendChild(script);
+  // index.html에서 autoload=false로 불러온 SDK가 있으면
+  // 새로운 script를 추가하지 않고 load만 실행
+  if (
+    window.kakao &&
+    window.kakao.maps
+  ) {
+    window.kakao.maps.load(initMap);
+    return;
   }
+
+  // SDK 자체가 없는 경우에만 새 script 추가
+  const script =
+    document.createElement("script");
+
+  script.src =
+    `//dapi.kakao.com/v2/maps/sdk.js` +
+    `?autoload=false` +
+    `&appkey=${import.meta.env.VITE_KAKAO_MAP_API_KEY}` +
+    `&libraries=services,clusterer`;
+
+  script.onload = () => {
+    window.kakao.maps.load(initMap);
+  };
+
+  script.onerror = () => {
+    console.error(
+      "카카오 지도 SDK를 불러오지 못했습니다.",
+    );
+  };
+
+  document.head.appendChild(script);
 });
 
 onBeforeUnmount(() => {
@@ -52,25 +74,44 @@ const initMap = () => {
   // 대전 캠퍼스(삼성화재 유성연수원) 중심 좌표 정의
   const campusLatLng = new window.kakao.maps.LatLng(36.3553675622378, 127.298408300646);
 
+  const firstMeeting = props.meetings.find(
+    (meeting) =>
+      meeting.map_y !== null &&
+      meeting.map_y !== undefined &&
+      meeting.map_x !== null &&
+      meeting.map_x !== undefined &&
+      Number.isFinite(Number(meeting.map_y)) &&
+      Number.isFinite(Number(meeting.map_x)),
+  );
+
+  const initialCenter =
+    !props.isCluster && firstMeeting
+      ? new window.kakao.maps.LatLng(
+          Number(firstMeeting.map_y),
+          Number(firstMeeting.map_x),
+        )
+      : campusLatLng;
+
   const options = {
-    center: campusLatLng,
-    level: 4,
+    center: initialCenter,
+    level: props.isCluster ? 4 : 3,
   };
 
   map = new window.kakao.maps.Map(container, options);
 
-  // 캠퍼스 위치 하이라이트 고정 마커 생성
-  const campusMarker = new window.kakao.maps.Marker({
-    position: campusLatLng,
-    map: map,
-  });
+  // 홈 지도에서만 캠퍼스 기준 위치를 함께 표시
+  if (props.isCluster) {
+    const campusMarker = new window.kakao.maps.Marker({
+      position: campusLatLng,
+      map: map,
+    });
 
-  // 캠퍼스 마커 위에 항상 떠 있는 말풍선 추가
-  const campusInfoWindow = new window.kakao.maps.InfoWindow({
-    position: campusLatLng,
-    content: `<div style="padding:5px 10px;font-size:12px;font-weight:bold;color:#ef4444;text-align:center;">📍삼성화재 유성연수원</div>`,
-  });
-  campusInfoWindow.open(map, campusMarker);
+    const campusInfoWindow = new window.kakao.maps.InfoWindow({
+      position: campusLatLng,
+      content: `<div style="padding:5px 10px;font-size:12px;font-weight:bold;color:#ef4444;text-align:center;">📍삼성화재 유성연수원</div>`,
+    });
+    campusInfoWindow.open(map, campusMarker);
+  }
 
   // 클러스터링 모드가 활성화되어 있을 때만 클러스터러 인스턴스화
   if (props.isCluster) {
@@ -109,10 +150,20 @@ const updateMarkers = (meetingsList) => {
   if (clusterer) {
     clusterer.clear();
   }
+  renderedMarkers.forEach((marker) => marker.setMap(null));
+  renderedMarkers = [];
 
   // 기존 latitude/longitude를 실제 데이터베이스 컬럼명인 map_y/map_x로 바인딩
   const markers = meetingsList
-    .filter((m) => m.map_y && m.map_x)
+    .filter(
+      (meeting) =>
+        meeting.map_y !== null &&
+        meeting.map_y !== undefined &&
+        meeting.map_x !== null &&
+        meeting.map_x !== undefined &&
+        Number.isFinite(Number(meeting.map_y)) &&
+        Number.isFinite(Number(meeting.map_x)),
+    )
     .map((meeting) => {
       const imageSrc = lightningIcon;
       const imageSize = new window.kakao.maps.Size(40, 40);
@@ -141,6 +192,13 @@ const updateMarkers = (meetingsList) => {
 
       return marker;
     });
+
+  renderedMarkers = markers;
+
+  // 상세 화면에서는 해당 모임 장소를 지도 중앙에 표시
+  if (!props.isCluster && markers.length === 1) {
+    map.setCenter(markers[0].getPosition());
+  }
 
   // 클러스터링 모드가 활성화되어 있다면, 클러스터러에 마커를 통째로 집어넣어 합쳐 표기
   if (props.isCluster && clusterer) {
