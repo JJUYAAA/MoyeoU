@@ -11,6 +11,8 @@ import {
 import BaseModal from "@/components/BaseModal.vue";
 import MeetingEditModal from "@/components/MeetingEditModal.vue";
 import MeetingDeleteModal from "@/components/MeetingDeleteModal.vue";
+import KakaoMap from "@/components/KakaoMap.vue";
+
 
 const route = useRoute();
 const router = useRouter();
@@ -227,7 +229,7 @@ async function submitReply(parentId) {
       nickname: replyForm.value.nickname,
       password: replyForm.value.password,
       content: replyForm.value.content,
-      parent_id: parentId,
+      parent_id: parentId
     });
 
     // 직접 클라이언트 배열에 push하는 대신 데이터베이스 최신 상태 동기화
@@ -361,6 +363,18 @@ const formatDate = (dateStr) => {
           <p class="leading-relaxed text-ink/80 whitespace-pre-line">
             {{ meeting.content }}
           </p>
+        </div>
+
+        <div class="mb-6">
+          <h2 class="mb-3 text-base font-bold text-ink">모임 장소</h2>
+          <p class="mb-3 text-sm text-ink/70">
+            {{ meeting.location_name }}
+          </p>
+          <KakaoMap
+            :meetings="[meeting]"
+            :is-cluster="false"
+            class="w-full"
+          />
         </div>
 
         <p
