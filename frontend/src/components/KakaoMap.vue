@@ -7,6 +7,11 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  // 번개 온도 및 밀집도(클러스터러) 표시 여부를 결정하는 옵션
+  isCluster: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const mapContainer = ref(null);
@@ -14,7 +19,6 @@ let map = null;
 let clusterer = null;
 
 onMounted(() => {
-  // ⚡ [해결] 이미 카카오맵 객체가 로드되어 존재한다면, 굳이 load()를 부르지 않고 즉시 지도를 그립니다.
   if (window.kakao && window.kakao.maps && window.kakao.maps.Map) {
     initMap();
   } else {
@@ -27,7 +31,6 @@ onMounted(() => {
   }
 });
 
-// 페이지 전환 시 안전하게 클린업하여 메모리 누수 방지
 onBeforeUnmount(() => {
   try {
     if (clusterer) {
@@ -69,38 +72,47 @@ const initMap = () => {
   });
   campusInfoWindow.open(map, campusMarker);
 
-  clusterer = new window.kakao.maps.MarkerClusterer({
-    map: map,
-    averageCenter: true,
-    minLevel: 5,
-    styles: [
-      {
-        width: "40px",
-        height: "40px",
-        background: "rgba(239, 68, 68, 0.85)",
-        borderRadius: "50%",
-        color: "#fff",
-        textAlign: "center",
-        fontWeight: "bold",
-        lineHeight: "40px",
-        boxShadow: "0 0 15px rgba(239, 68, 68, 0.6)",
-      },
-    ],
-  });
+  // 클러스터링 모드가 활성화되어 있을 때만 클러스터러 인스턴스화
+  if (props.isCluster) {
+    clusterer = new window.kakao.maps.MarkerClusterer({
+      map: map,
+      averageCenter: true,
+      minLevel: 3, // 마커들이 클러스터링(합쳐지는) 최소 지도 축척 레벨
+      styles: [
+        {
+          width: "55px",
+          height: "55px",
+          background:
+            "radial-gradient(circle, rgba(239, 68, 68, 0.95) 0%, rgba(220, 38, 38, 0.85) 100%)",
+          borderRadius: "50%",
+          color: "#fff",
+          textAlign: "center",
+          fontWeight: "black",
+          fontSize: "14px",
+          lineHeight: "55px",
+          boxShadow: "0 0 0 8px rgba(239, 68, 68, 0.3), 0 4px 15px rgba(0,0,0,0.25)",
+          animation: "pulse 2s infinite",
+        },
+      ],
+    });
+  }
 
-  // 실제 데이터가 넘어왔다면 즉시 마커를 그려줍니다.
   if (props.meetings && props.meetings.length > 0) {
     updateMarkers(props.meetings);
   }
 };
 
 const updateMarkers = (meetingsList) => {
-  if (!map || !clusterer) return;
+  if (!map) return;
 
-  clusterer.clear();
+  // 클러스터러 및 기존 마커 초기화
+  if (clusterer) {
+    clusterer.clear();
+  }
 
+  // 기존 latitude/longitude를 실제 데이터베이스 컬럼명인 map_y/map_x로 바인딩
   const markers = meetingsList
-    .filter((m) => m.latitude && m.longitude)
+    .filter((m) => m.map_y && m.map_x)
     .map((meeting) => {
       const imageSrc = lightningIcon;
       const imageSize = new window.kakao.maps.Size(40, 40);
@@ -109,7 +121,7 @@ const updateMarkers = (meetingsList) => {
       const markerImage = new window.kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);
 
       const marker = new window.kakao.maps.Marker({
-        position: new window.kakao.maps.LatLng(meeting.latitude, meeting.longitude),
+        position: new window.kakao.maps.LatLng(meeting.map_y, meeting.map_x),
         image: markerImage,
       });
 
@@ -122,20 +134,29 @@ const updateMarkers = (meetingsList) => {
         infowindow.open(map, marker);
       });
 
+      // 클러스터링 상태가 아니라면 마커를 지도 상에 즉시 직접 그림
+      if (!props.isCluster) {
+        marker.setMap(map);
+      }
+
       return marker;
     });
 
-  clusterer.addMarkers(markers);
+  // 클러스터링 모드가 활성화되어 있다면, 클러스터러에 마커를 통째로 집어넣어 합쳐 표기
+  if (props.isCluster && clusterer) {
+    clusterer.addMarkers(markers);
+  }
 };
 
-// props.meetings의 변화를 실시간으로 감시하되, 지도가 초기화된 이후 안전하게 그리도록 조율
 watch(
   () => props.meetings,
   (newMeetings) => {
     if (newMeetings && newMeetings.length > 0) {
       updateMarkers(newMeetings);
     } else {
-      clusterer?.clear();
+      if (clusterer) {
+        clusterer.clear();
+      }
     }
   },
   { deep: true },
@@ -153,5 +174,24 @@ watch(
 <style scoped>
 div {
   overflow: hidden;
+}
+
+/* 번개 온도 클러스터 서클을 부드럽게 펄스 효과 내는 애니메이션 추가 */
+@keyframes pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(239, 68, 68, 0.5),
+      0 4px 15px rgba(0, 0, 0, 0.25);
+  }
+  70% {
+    box-shadow:
+      0 0 0 12px rgba(239, 68, 68, 0),
+      0 4px 15px rgba(0, 0, 0, 0.25);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(239, 68, 68, 0),
+      0 4px 15px rgba(0, 0, 0, 0.25);
+  }
 }
 </style>
