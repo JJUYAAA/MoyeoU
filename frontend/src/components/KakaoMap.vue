@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from "vue";
+import { onMounted, onBeforeUnmount, ref, watch } from "vue";
 import lightningIcon from "@/assets/lightning.svg";
 
 const props = defineProps({
@@ -14,8 +14,9 @@ let map = null;
 let clusterer = null;
 
 onMounted(() => {
-  if (window.kakao && window.kakao.maps) {
-    window.kakao.maps.load(initMap);
+  // ⚡ [해결] 이미 카카오맵 객체가 로드되어 존재한다면, 굳이 load()를 부르지 않고 즉시 지도를 그립니다.
+  if (window.kakao && window.kakao.maps && window.kakao.maps.Map) {
+    initMap();
   } else {
     const script = document.createElement("script");
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?autoload=false&appkey=${import.meta.env.VITE_KAKAO_MAP_API_KEY}&libraries=clusterer`;
@@ -26,11 +27,26 @@ onMounted(() => {
   }
 });
 
+// 페이지 전환 시 안전하게 클린업하여 메모리 누수 방지
+onBeforeUnmount(() => {
+  try {
+    if (clusterer) {
+      clusterer.clear();
+      clusterer = null;
+    }
+    if (map) {
+      map = null;
+    }
+  } catch (error) {
+    console.error("지도를 정리하는 도중 오류가 발생했습니다:", error);
+  }
+});
+
 const initMap = () => {
   const container = mapContainer.value;
   if (!container) return;
 
-  // 대전 캠퍼스 중심 좌표 정의
+  // 대전 캠퍼스(삼성화재 유성연수원) 중심 좌표 정의
   const campusLatLng = new window.kakao.maps.LatLng(36.3553675622378, 127.298408300646);
 
   const options = {
@@ -46,7 +62,7 @@ const initMap = () => {
     map: map,
   });
 
-  // 캠퍼스 마커 위에 말풍선 추가
+  // 캠퍼스 마커 위에 항상 떠 있는 말풍선 추가
   const campusInfoWindow = new window.kakao.maps.InfoWindow({
     position: campusLatLng,
     content: `<div style="padding:5px 10px;font-size:12px;font-weight:bold;color:#ef4444;text-align:center;">📍삼성화재 유성연수원</div>`,
@@ -72,10 +88,9 @@ const initMap = () => {
     ],
   });
 
+  // 실제 데이터가 넘어왔다면 즉시 마커를 그려줍니다.
   if (props.meetings && props.meetings.length > 0) {
     updateMarkers(props.meetings);
-  } else {
-    updateMarkers(dummyMeetings);
   }
 };
 
@@ -113,13 +128,14 @@ const updateMarkers = (meetingsList) => {
   clusterer.addMarkers(markers);
 };
 
+// props.meetings의 변화를 실시간으로 감시하되, 지도가 초기화된 이후 안전하게 그리도록 조율
 watch(
   () => props.meetings,
   (newMeetings) => {
     if (newMeetings && newMeetings.length > 0) {
       updateMarkers(newMeetings);
     } else {
-      updateMarkers(dummyMeetings);
+      clusterer?.clear();
     }
   },
   { deep: true },
