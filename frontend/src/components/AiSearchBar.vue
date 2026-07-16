@@ -1,35 +1,35 @@
 <script setup>
-import { ref } from 'vue'
+import { ref } from "vue";
 
 const props = defineProps({
   placeholder: {
     type: String,
-    default: '예: 오늘 교육 끝나고 모각코 할 사람 있어?',
+    default: "모임 장소, 카테고리 키워드로 검색해보세요. (예: 관광)",
   },
   suggestions: {
     type: Array,
     default: () => [],
   },
-})
+});
 
-const emit = defineEmits(['search'])
+const emit = defineEmits(["search"]);
 
-const query = ref('')
+const query = ref("");
 
 function submit() {
-  if (!query.value.trim()) return
-  emit('search', query.value.trim())
+  if (!query.value.trim()) return;
+  emit("search", query.value.trim());
 }
 
 function useSuggestion(text) {
-  query.value = text
-  emit('search', text)
+  query.value = text;
+  emit("search", text);
 }
 
 // CJK IME 조합 중에는 Enter 제출을 막습니다.
 function onKeydown(e) {
-  if (e.isComposing || e.keyCode === 229) return
-  submit()
+  if (e.isComposing || e.keyCode === 229) return;
+  submit();
 }
 </script>
 
@@ -44,7 +44,7 @@ function onKeydown(e) {
         @keydown.enter="onKeydown"
       />
       <button type="button" class="btn-primary whitespace-nowrap" @click="submit">
-        AI로 모임 찾기
+        원하는 모임 찾기
       </button>
     </div>
 

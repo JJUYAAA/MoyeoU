@@ -12,11 +12,7 @@ const router = useRouter();
 const meetings = ref([]);
 const places = ref([]);
 
-const suggestions = [
-  "오늘 알고리즘 모각코 있어?",
-  "점심 같이 먹을 사람",
-  "관통 프로젝트 팀원 구해요",
-];
+const suggestions = ["여행", "대전 시청", "맛집"];
 
 onMounted(async () => {
   const meetingsData = await getMeetings();
